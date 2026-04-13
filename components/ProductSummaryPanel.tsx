@@ -105,10 +105,17 @@ export function ProductSummaryPanel({
     return [...scheduled, ...prioritized];
   })();
 
-  // Recompute summary and total from the capped item set
-  const displaySummary = weekOffset === 1 && totalTarget
-    ? buildProductSummary(cappedAllItems)
-    : summary;
+  // Recompute summary from capped items, then merge with the full product list from
+  // the server (which already includes zero-count products). This ensures every
+  // product always appears in the grid, even if it has 0 tasks this week.
+  const displaySummary = (() => {
+    if (weekOffset !== 1 || !totalTarget) return summary;
+    const capped = buildProductSummary(cappedAllItems);
+    const cappedMap = new Map(capped.map((p) => [p.product, p]));
+    // Start from the full server summary (all products, including zero-count ones),
+    // then overlay the capped counts for products that appear in the capped set.
+    return summary.map((p) => cappedMap.get(p.product) ?? { ...p, total: 0, items: [] });
+  })();
   const displayTotal = cappedAllItems.length;
 
   const cappedProducts = displaySummary.filter((p) => !isBundle(p.product));
