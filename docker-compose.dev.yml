@@ -1,0 +1,19 @@
+services:
+  ppd-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: ppd-dashboard:dev
+    container_name: ppd-dashboard
+    ports:
+      - "3002:3000"
+    volumes:
+      # Mount source so next dev picks up changes without rebuilding
+      - .:/app
+      # Keep node_modules from the image, don't overwrite with host's
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - MONDAY_API_KEY=${MONDAY_API_KEY}
+      - MONDAY_API_URL=${MONDAY_API_URL:-https://api.monday.com/v2}
+    restart: unless-stopped
