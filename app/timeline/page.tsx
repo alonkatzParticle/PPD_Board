@@ -16,83 +16,81 @@ interface BoardsData {
   design: { id: string; name: string } | null;
 }
 
-interface ItemsData {
+interface WeekData {
   items: DashboardItem[];
   productSummary: ProductSummary[];
   columnMapping: ColumnMapping;
   total: number;
 }
 
-// ── Pure fetch helper (no React state, safe to call anywhere) ──────────────
-async function fetchItems(
+interface AllWeeksData {
+  lastWeek: WeekData;
+  thisWeek: WeekData;
+  nextWeek: WeekData;
+}
+
+// ── Fetch all 3 week views in ONE API call ─────────────────────────────────
+async function fetchAllWeeks(
   boardId: string,
   boardType: BoardType,
-  groupsParam: string,
-  weekOffset: number,
   force = false
-): Promise<ItemsData> {
+): Promise<AllWeeksData> {
   const url = new URL("/api/items", window.location.origin);
   url.searchParams.set("boardId", boardId);
   url.searchParams.set("boardType", boardType);
-  url.searchParams.set("groups", groupsParam);
-  url.searchParams.set("weekOffset", String(weekOffset));
+  url.searchParams.set("groups", "all");
+  url.searchParams.set("allWeeks", "1");
   if (force) url.searchParams.set("refresh", "1");
   const res = await fetch(url.toString());
   if (!res.ok) throw new Error("Failed to load items");
-  return res.json() as Promise<ItemsData>;
+  return res.json() as Promise<AllWeeksData>;
 }
 
-// ── Prefetch all week offsets + all boards in the background ───────────────
-// Fires silently after initial boards load so every tab/board switch is instant.
+// ── Prefetch both boards in background ────────────────────────────────────
 async function prefetchAll(boardsData: BoardsData) {
   const boards: BoardType[] = ["video", "design"];
-  const offsets = [-1, 0, 1];
-
   await Promise.allSettled(
-    boards.flatMap((boardType) => {
+    boards.map(async (boardType) => {
       const boardId = boardsData[boardType]?.id;
-      if (!boardId) return [];
-      return offsets.map(async (offset) => {
-        const cacheKey = `items:timeline:${boardId}:all:${offset}`;
-        if (getCached(cacheKey)) return; // already warm — skip
-        try {
-          const data = await fetchItems(boardId, boardType, "all", offset);
-          setCached(cacheKey, data);
-        } catch {
-          // prefetch failure is silent — user will see a spinner on demand
-        }
-      });
+      if (!boardId) return;
+      const cacheKey = `allweeks:${boardId}`;
+      if (getCached(cacheKey)) return; // already warm
+      try {
+        const data = await fetchAllWeeks(boardId, boardType);
+        setCached(cacheKey, data);
+      } catch { /* silent */ }
     })
   );
 }
+
+// ── Map weekOffset → key in AllWeeksData ──────────────────────────────────
+const WEEK_KEYS: Record<number, keyof AllWeeksData> = { [-1]: "lastWeek", 0: "thisWeek", 1: "nextWeek" };
 
 export default function DashboardPage() {
   const [activeBoard, setActiveBoard] = useState<BoardType>("video");
   const [boardsData, setBoardsData] = useState<BoardsData | null>(null);
   const [groups, setGroups] = useState<MondayGroup[]>([]);
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
-  const [itemsData, setItemsData] = useState<ItemsData | null>(null);
+  const [allWeeksData, setAllWeeksData] = useState<AllWeeksData | null>(null);
   const [weekOffset, setWeekOffset] = useState(0);
   const [loadingBoards, setLoadingBoards] = useState(true);
-  const [loadingGroups, setLoadingGroups] = useState(false);
   const [loadingItems, setLoadingItems] = useState(false);
+  const [loadingGroups, setLoadingGroups] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const [hasNewData, setHasNewData] = useState(false);
   const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // ── Step 1: Load board IDs (cached + prefetch everything) ────────────────
+  // ── Step 1: Load boards then kick off prefetch for both boards ────────────
   useEffect(() => {
     async function loadBoards() {
       const hit = getCached<BoardsData>("boards");
       if (hit) {
         setBoardsData(hit);
         setLoadingBoards(false);
-        // Still prefetch in case any week offsets are stale
         prefetchAll(hit);
         return;
       }
-
       setLoadingBoards(true);
       try {
         const res = await fetch("/api/boards");
@@ -100,7 +98,6 @@ export default function DashboardPage() {
         const data: BoardsData = await res.json();
         setCached("boards", data);
         setBoardsData(data);
-        // Kick off background prefetch for all boards × all weeks
         prefetchAll(data);
       } catch (e) {
         setError((e as Error).message);
@@ -111,7 +108,7 @@ export default function DashboardPage() {
     loadBoards();
   }, []);
 
-  // ── Step 2: Load groups when board changes (cached) ──────────────────────
+  // ── Step 2: Load groups when board changes (cached) ───────────────────────
   useEffect(() => {
     if (!boardsData) return;
     const boardId = boardsData[activeBoard]?.id;
@@ -139,35 +136,31 @@ export default function DashboardPage() {
     loadGroups();
   }, [activeBoard, boardsData]);
 
-  // ── Step 3: Load items — reads from cache first, never blocks tab switches ─
-  const loadItems = useCallback(async (forceRefresh = false, silent = false) => {
+  // ── Step 3: Load all weeks — ONE fetch per board, cached ──────────────────
+  const loadAllWeeks = useCallback(async (forceRefresh = false, silent = false) => {
     if (!boardsData) return;
     const boardId = boardsData[activeBoard]?.id;
     if (!boardId) return;
 
-    const groupsParam = selectedGroups.length > 0 ? selectedGroups.join(",") : "all";
-    const cacheKey = `items:timeline:${boardId}:${groupsParam}:${weekOffset}`;
+    const cacheKey = `allweeks:${boardId}`;
 
-    // Always check cache first — tab switches are instant if prefetch ran
     if (!forceRefresh) {
-      const hit = getCached<ItemsData>(cacheKey);
-      if (hit) {
-        setItemsData(hit);
-        return;
-      }
+      const hit = getCached<AllWeeksData>(cacheKey);
+      if (hit) { setAllWeeksData(hit); return; }
     }
 
     if (!silent) setLoadingItems(true);
     setError(null);
 
     try {
-      if (forceRefresh) bustCacheByPrefix(`items:timeline:${boardId}`);
-      const data = await fetchItems(boardId, activeBoard, groupsParam, weekOffset, forceRefresh);
+      if (forceRefresh) bustCacheByPrefix(`allweeks:${boardId}`);
+      const data = await fetchAllWeeks(boardId, activeBoard, forceRefresh);
       setCached(cacheKey, data);
 
       if (silent) {
-        setItemsData((prev) => {
-          if (prev?.total !== data.total) {
+        setAllWeeksData((prev) => {
+          const prevTotal = prev?.thisWeek.total ?? -1;
+          if (prevTotal !== data.thisWeek.total) {
             setHasNewData(true);
             setTimeout(() => setHasNewData(false), 4000);
             return data;
@@ -175,7 +168,7 @@ export default function DashboardPage() {
           return prev;
         });
       } else {
-        setItemsData(data);
+        setAllWeeksData(data);
       }
       setLastRefresh(new Date());
     } catch (e) {
@@ -183,50 +176,59 @@ export default function DashboardPage() {
     } finally {
       if (!silent) setLoadingItems(false);
     }
-  }, [activeBoard, selectedGroups, weekOffset, boardsData]);
+  }, [activeBoard, boardsData]);
 
-  // Trigger on dependency change
+  // Trigger when board or groups data is ready
   useEffect(() => {
     if (!loadingGroups && boardsData) {
-      loadItems();
+      loadAllWeeks();
     }
-  }, [loadItems, loadingGroups, boardsData]);
+  }, [loadAllWeeks, loadingGroups, boardsData]);
 
-  // ── Background refresh every 5 min — refreshes all cached combinations ───
+  // ── Background refresh every 5 min — re-warms both boards ────────────────
   useEffect(() => {
     if (!boardsData) return;
     if (refreshIntervalRef.current) clearInterval(refreshIntervalRef.current);
 
     refreshIntervalRef.current = setInterval(async () => {
-      // Bust and re-prefetch all boards × all weeks
       const boards: BoardType[] = ["video", "design"];
-      for (const boardType of boards) {
-        const boardId = boardsData[boardType]?.id;
-        if (!boardId) continue;
-        bustCacheByPrefix(`items:timeline:${boardId}`);
+      for (const b of boards) {
+        const id = boardsData[b]?.id;
+        if (id) bustCacheByPrefix(`allweeks:${id}`);
       }
       await prefetchAll(boardsData);
-
-      // Then silently refresh the current view
-      loadItems(false, true);
+      loadAllWeeks(false, true);
     }, 5 * 60 * 1000);
 
     return () => {
       if (refreshIntervalRef.current) clearInterval(refreshIntervalRef.current);
     };
-  }, [boardsData, loadItems]);
+  }, [boardsData, loadAllWeeks]);
 
-  // ── Board switch — instant if prefetch warmed the cache ──────────────────
+  // ── Board switch — instant from cache ────────────────────────────────────
   const handleBoardSwitch = (board: BoardType) => {
     setActiveBoard(board);
     setWeekOffset(0);
-    // Don't null itemsData — keep showing old board while new one loads from cache
-    // (loadItems will update it instantly if cached)
+    // Don't null allWeeksData — keep previous board visible while new loads from cache
   };
 
+  // ── Derive current week's data from cached allWeeks ───────────────────────
+  const itemsData: WeekData | null = allWeeksData
+    ? allWeeksData[WEEK_KEYS[weekOffset] ?? "thisWeek"]
+    : null;
+
+  // If user has a group filter active, filter client-side (no extra fetch needed)
+  const filteredItemsData: WeekData | null = (() => {
+    if (!itemsData || selectedGroups.length === 0) return itemsData;
+    const filtered = itemsData.items.filter((i) =>
+      selectedGroups.includes((i as { groupId?: string }).groupId ?? "")
+    );
+    return { ...itemsData, items: filtered, total: filtered.length };
+  })();
+
   const weekWindow = getWeekWindow(weekOffset);
-  const overdueCount = itemsData?.items.filter((i) => i.isOverdue).length ?? 0;
-  const dueSoonCount = itemsData?.items.filter((i) => i.isDueSoon && !i.isOverdue).length ?? 0;
+  const overdueCount = filteredItemsData?.items.filter((i) => i.isOverdue).length ?? 0;
+  const dueSoonCount = filteredItemsData?.items.filter((i) => i.isDueSoon && !i.isOverdue).length ?? 0;
 
   return (
     <div className="min-h-screen hero-gradient">
@@ -268,7 +270,7 @@ export default function DashboardPage() {
             )}
             <button
               id="refresh-btn"
-              onClick={() => loadItems(true)}
+              onClick={() => loadAllWeeks(true)}
               disabled={loadingItems}
               className={cn(
                 "flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-all border border-transparent hover:border-zinc-700",
@@ -283,7 +285,6 @@ export default function DashboardPage() {
 
         {/* ── Row 2: Week tabs + stats ── */}
         <div className="flex flex-wrap items-center gap-4">
-          {/* Tabs */}
           <div className="flex items-center gap-1 p-1 rounded-xl bg-zinc-900 border border-zinc-800">
             {([
               { label: "Last Week", offset: -1 },
@@ -306,7 +307,7 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          {!loadingItems && itemsData && (
+          {!loadingItems && filteredItemsData && (
             <div className="flex items-center gap-2 ml-auto">
               {overdueCount > 0 && (
                 <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-950/60 border border-red-800/50 text-red-300 text-xs font-medium">
@@ -322,7 +323,7 @@ export default function DashboardPage() {
               )}
               <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 text-xs font-medium">
                 <BarChart3 className="w-3 h-3" />
-                {itemsData.total} tasks
+                {filteredItemsData.total} tasks
               </span>
             </div>
           )}
@@ -330,17 +331,17 @@ export default function DashboardPage() {
 
         {/* ── Product Summary ── */}
         <ProductSummaryPanel
-          summary={itemsData?.productSummary ?? []}
-          totalItems={itemsData?.total ?? 0}
+          summary={filteredItemsData?.productSummary ?? []}
+          totalItems={filteredItemsData?.total ?? 0}
           loading={loadingItems}
-          allItems={itemsData?.items ?? []}
+          allItems={filteredItemsData?.items ?? []}
           boardType={activeBoard}
           weekKey={toWeekKey(weekWindow.start)}
           weekOffset={weekOffset}
         />
 
         {/* ── Task Table ── */}
-        <TaskTable items={itemsData?.items ?? []} loading={loadingItems} />
+        <TaskTable items={filteredItemsData?.items ?? []} loading={loadingItems} />
       </main>
     </div>
   );

@@ -222,6 +222,7 @@ export async function GET(req: NextRequest) {
   const boardType = req.nextUrl.searchParams.get("boardType") as BoardType;
   const groupsParam = req.nextUrl.searchParams.get("groups");
   const weekOffset = parseInt(req.nextUrl.searchParams.get("weekOffset") ?? "0", 10);
+  const allWeeks = req.nextUrl.searchParams.get("allWeeks") === "1";
   const mode: ItemsMode = (req.nextUrl.searchParams.get("mode") as ItemsMode) ?? "timeline";
   const force = req.nextUrl.searchParams.get("refresh") === "1";
 
@@ -239,83 +240,100 @@ export async function GET(req: NextRequest) {
     const allGroups = meta.boards[0]?.groups ?? [];
     const columnMapping: ColumnMapping = detectColumnMapping(columns);
 
-    // Step 2: Fetch items (cached per board+mode)
-    const cacheEntry = await fetchBoardCached(boardId, columnMapping, allGroups, mode, force);
-    const rawItems = cacheEntry.items;
-
-    // Step 3: Optional user group filter (from GroupFilter UI)
-    const grouped = selectedGroupIds
-      ? rawItems.filter((i) => selectedGroupIds.includes(i.group.id))
-      : rawItems;
-
-    // Step 4: Normalize — skip department filter in intake mode (items have no dept set)
-    const normalized = grouped
-      .map((i) => normalizeMondayItem(i, boardType, columnMapping, mode === "intake"))
-      .filter((i): i is NonNullable<typeof i> => i !== null);
-
-    // Step 5: Mode-specific filter + sort
-    let filtered: NonNullable<ReturnType<typeof normalizeMondayItem>>[];
-
-    if (mode === "intake") {
-      // Already fetched only from intake-stage groups — just sort alphabetically
-      filtered = normalized.sort((a, b) => a.name.localeCompare(b.name));
-    } else {
-      const weekWindow = getWeekWindow(weekOffset);
-      filtered = filterByWeekWindow(normalized, weekWindow);
-
-      // ── Pipeline credit (Next Week only) ────────────────────────────────
-      // The timeline fetch uses is_not_empty, so unscheduled intake items
-      // (Form Requests / Ready for Assignment) are never in `normalized`.
-      // We load them separately from the intake cache and apply the pipeline filter.
-      if (weekOffset === 1) {
-        const intakeCacheEntry = await fetchBoardCached(boardId, columnMapping, allGroups, "intake", false);
-        const intakeNormalized = intakeCacheEntry.items
-          .map((i) => normalizeMondayItem(i, boardType, columnMapping, true))
-          .filter((i): i is NonNullable<typeof i> => i !== null);
-
-        const depts = Array.from(new Set(intakeNormalized.map(i => i.department))).join(", ");
-        console.log(`[pipeline] intake items: ${intakeNormalized.length}, departments: ${depts}`);
-
-
-        const scheduledIds = new Set(filtered.map((i) => i.id));
-        const pipeline = getPipelineTasks(intakeNormalized, weekWindow, scheduledIds);
-
-        console.log(`[pipeline] qualified: ${pipeline.length}`);
-        filtered = [...filtered, ...pipeline];
-      }
-
-      filtered.sort((a, b) => {
-        // Pipeline (no timeline) tasks sink to the bottom
-        if (!a.timelineEnd && !b.timelineEnd) return 0;
-        if (!a.timelineEnd) return 1;
-        if (!b.timelineEnd) return -1;
-        return new Date(a.timelineEnd).getTime() - new Date(b.timelineEnd).getTime();
-      });
-    }
-
-    const age = Date.now() - cacheEntry.fetchedAt;
-
-    // Parse all known product names from the product column's dropdown settings
-    // so the summary panel shows every product even if count = 0
+    // Parse known product names once
     const productCol = columns.find((c) => c.id === columnMapping.product);
     let knownProducts: string[] | undefined;
     if (productCol?.settings_str) {
       try {
         const settings = JSON.parse(productCol.settings_str) as { labels?: Record<string, string> };
         knownProducts = Object.values(settings.labels ?? {}).filter((v) => v && v !== "-");
-      } catch { /* ignore parse errors */ }
+      } catch { /* ignore */ }
     }
 
+    // Step 2: Fetch raw items ONCE (cached per board+mode)
+    const [cacheEntry, intakeCacheEntry] = await Promise.all([
+      fetchBoardCached(boardId, columnMapping, allGroups, "timeline", force),
+      fetchBoardCached(boardId, columnMapping, allGroups, "intake", force),
+    ]);
+
+    const rawItems = cacheEntry.items;
+    const age = Date.now() - cacheEntry.fetchedAt;
+
+    // Step 3: Optional group filter
+    const grouped = selectedGroupIds
+      ? rawItems.filter((i) => selectedGroupIds.includes(i.group.id))
+      : rawItems;
+
+    // Step 4: Normalize once — reuse for all week views
+    const normalized = grouped
+      .map((i) => normalizeMondayItem(i, boardType, columnMapping, false))
+      .filter((i): i is NonNullable<typeof i> => i !== null);
+
+    // Intake normalized (for pipeline tasks)
+    const intakeNormalized = intakeCacheEntry.items
+      .map((i) => normalizeMondayItem(i, boardType, columnMapping, true))
+      .filter((i): i is NonNullable<typeof i> => i !== null);
+
+    // ── Helper: build one week's response ────────────────────────────────────
+    const buildWeekData = (offset: number) => {
+      const weekWindow = getWeekWindow(offset);
+      let filtered = filterByWeekWindow(normalized, weekWindow);
+
+      if (offset === 1) {
+        const scheduledIds = new Set(filtered.map((i) => i.id));
+        const pipeline = getPipelineTasks(intakeNormalized, weekWindow, scheduledIds);
+        filtered = [...filtered, ...pipeline];
+      }
+
+      filtered.sort((a, b) => {
+        if (!a.timelineEnd && !b.timelineEnd) return 0;
+        if (!a.timelineEnd) return 1;
+        if (!b.timelineEnd) return -1;
+        return new Date(a.timelineEnd).getTime() - new Date(b.timelineEnd).getTime();
+      });
+
+      return {
+        items: filtered,
+        productSummary: buildProductSummary(filtered, knownProducts),
+        columnMapping,
+        total: filtered.length,
+      };
+    }
+
+    // ── allWeeks mode: return all 3 views in one shot ────────────────────────
+    if (allWeeks && mode !== "intake") {
+      return NextResponse.json({
+        lastWeek: buildWeekData(-1),
+        thisWeek: buildWeekData(0),
+        nextWeek: buildWeekData(1),
+        cached: age < BOARD_ITEM_TTL,
+        cacheAgeSeconds: Math.round(age / 1000),
+      });
+    }
+
+    // ── Single-week / intake mode (backward-compatible) ──────────────────────
+    if (mode === "intake") {
+      const filtered = intakeNormalized.sort((a, b) => a.name.localeCompare(b.name));
+      return NextResponse.json({
+        items: filtered,
+        productSummary: buildProductSummary(filtered, knownProducts),
+        columnMapping,
+        total: filtered.length,
+        cached: age < BOARD_ITEM_TTL,
+        cacheAgeSeconds: Math.round(age / 1000),
+      });
+    }
+
+    const weekData = buildWeekData(weekOffset);
     return NextResponse.json({
-      items: filtered,
-      productSummary: buildProductSummary(filtered, knownProducts),
-      columnMapping,
-      total: filtered.length,
+      ...weekData,
       cached: age < BOARD_ITEM_TTL,
       cacheAgeSeconds: Math.round(age / 1000),
     });
+
   } catch (err) {
     console.error("[/api/items]", err);
     return NextResponse.json({ error: "Failed to fetch items", detail: String(err) }, { status: 500 });
   }
 }
+
