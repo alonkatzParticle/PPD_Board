@@ -167,7 +167,12 @@ async function fetchTimelineItems(
   return drainCursor(page?.items ?? [], page?.cursor ?? null, itemFields);
 }
 
-// ── Cached fetch (deduplicates concurrent requests) ──────────────────────────
+// ── Cached fetch — hierarchy: memory → Postgres DB → Monday.com API ──────────
+// Memory:   0 ms  (lost on restart)
+// Postgres: ~50ms (persists forever across restarts, cold starts, deployments)
+// Monday:   5-15s (only hit when cache is empty or force-refreshed)
+
+import { hasDb, getItemsCache, setItemsCache, ensureSchema } from "@/lib/db";
 
 async function fetchBoardCached(
   boardId: string,
@@ -178,11 +183,29 @@ async function fetchBoardCached(
 ): Promise<BoardCache> {
   const cacheKey = `${boardId}:${mode}`;
 
+  // 1. In-memory (fastest — same server process)
   if (!force) {
-    const cached = boardItemCache.get(cacheKey);
-    if (cached && Date.now() - cached.fetchedAt < BOARD_ITEM_TTL) return cached;
+    const mem = boardItemCache.get(cacheKey);
+    if (mem && Date.now() - mem.fetchedAt < BOARD_ITEM_TTL) return mem;
   }
 
+  // 2. Postgres DB (survives restarts)
+  if (!force && hasDb()) {
+    try {
+      await ensureSchema();
+      const db = await getItemsCache(boardId, mode);
+      if (db) {
+        const age = Date.now() - db.fetchedAt.getTime();
+        if (age < BOARD_ITEM_TTL) {
+          const cached: BoardCache = { items: db.items, columnMapping: db.columnMapping, fetchedAt: db.fetchedAt.getTime() };
+          boardItemCache.set(cacheKey, cached); // promote to memory
+          return cached;
+        }
+      }
+    } catch { /* DB unavailable — continue to Monday.com */ }
+  }
+
+  // 3. Deduplicate concurrent fetches (don't hit Monday twice simultaneously)
   if (!force) {
     const inflight = inflightFetches.get(cacheKey);
     if (inflight) return inflight;
@@ -195,7 +218,15 @@ async function fetchBoardCached(
         : await fetchTimelineItems(boardId, columnMapping);
 
       const result: BoardCache = { items, columnMapping, fetchedAt: Date.now() };
+
+      // Save to memory
       boardItemCache.set(cacheKey, result);
+
+      // Save to Postgres DB (fire-and-forget so we don't block the response)
+      if (hasDb()) {
+        setItemsCache(boardId, mode, items, columnMapping).catch(() => {});
+      }
+
       return result;
     } finally {
       inflightFetches.delete(cacheKey);
