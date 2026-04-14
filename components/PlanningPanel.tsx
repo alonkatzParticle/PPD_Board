@@ -62,24 +62,12 @@ export function PlanningPanel({
               <p className="text-xs text-zinc-500 mt-0.5">Next Week · {weekLabel}</p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
-            {/* Add Task button */}
-            <button
-              onClick={() => setShowAddModal(true)}
-              disabled={dbError}
-              title={dbError ? "Database not connected" : "Add planned task"}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-600/20 hover:bg-violet-600/30 text-violet-400 hover:text-violet-300 border border-violet-600/30 text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Add task
-            </button>
-            <button
+          <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
+              className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors flex-shrink-0 ml-2"
             >
               <X className="w-4 h-4" />
             </button>
-          </div>
         </div>
 
         {/* ── Stats bar ─────────────────────────────────────────────────────── */}
@@ -100,9 +88,20 @@ export function PlanningPanel({
 
           {/* Planned drafts section — TOP */}
           <section className="px-4 py-4 border-b border-zinc-800/40">
-            <SectionLabel icon={<Pencil className="w-3.5 h-3.5" />}>
-              Planned Drafts ({plannedTasks.length})
-            </SectionLabel>
+            <div className="flex items-center justify-between">
+              <SectionLabel icon={<Pencil className="w-3.5 h-3.5" />}>
+                Planned Drafts ({plannedTasks.length})
+              </SectionLabel>
+              <button
+                onClick={() => setShowAddModal(true)}
+                disabled={dbError}
+                title={dbError ? "Database not connected" : "Add planned task"}
+                className="flex items-center gap-1 px-2 py-1 rounded-lg bg-violet-600/20 hover:bg-violet-600/30 text-violet-400 hover:text-violet-300 border border-violet-600/30 text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <Plus className="w-3 h-3" />
+                Add
+              </button>
+            </div>
 
             {plannedTasks.length === 0 ? (
               <div className="mt-4 py-8 flex flex-col items-center gap-2 text-zinc-700">
