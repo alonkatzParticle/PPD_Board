@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
-  RefreshCw, AlertTriangle, CalendarDays, ClipboardList, Package, ShoppingBag, Target,
+  RefreshCw, AlertTriangle, CalendarDays, ClipboardList, Package, ShoppingBag, Target, Pencil,
 } from "lucide-react";
 import type { BoardType, DashboardItem, ProductSummary, PlannedTask } from "@/lib/types";
 import { getWeekWindow, cn } from "@/lib/utils";
-import { toWeekKey, fetchWeekGoals, getWeekGoals, setProductTarget, type WeekGoals } from "@/lib/targets";
+import { toWeekKey, fetchWeekGoals, getWeekGoals, setProductTarget, setTotalTarget, type WeekGoals } from "@/lib/targets";
 import { getCached, setCached, bustCacheByPrefix } from "@/lib/clientCache";
 import { BoardToggle } from "@/components/BoardToggle";
 import { PlanningPanel } from "@/components/PlanningPanel";
@@ -208,6 +208,11 @@ export default function PlanningPage() {
     });
   }, [activeBoard, weekKey]);
 
+  const onSetTotalGoal = useCallback((value: number | null) => {
+    setTotalTarget(activeBoard, weekKey, value);
+    setGoals((prev) => ({ ...prev, totalTarget: value }));
+  }, [activeBoard, weekKey]);
+
   // ── Derived data ────────────────────────────────────────────────────────────
   const nextWeekData = allWeeksData?.nextWeek ?? null;
 
@@ -354,11 +359,13 @@ export default function PlanningPage() {
         )}
 
         {/* Goal progress bar */}
-        {goalsBarData.data.length > 0 && (
+        {(goalsBarData.data.length > 0 || goals.totalTarget !== null) && (
           <PlanningGoalBar
             data={goalsBarData.data}
             totalActual={goalsBarData.totalActual}
             totalGoal={goalsBarData.totalGoal}
+            totalTarget={goals.totalTarget}
+            onSetTotal={onSetTotalGoal}
           />
         )}
 
@@ -500,78 +507,131 @@ interface GoalsBarItem {
 }
 
 function PlanningGoalBar({
-  data, totalActual, totalGoal,
+  data, totalActual, totalGoal, totalTarget, onSetTotal,
 }: {
   data: GoalsBarItem[];
   totalActual: number;
   totalGoal: number;
+  totalTarget: number | null;
+  onSetTotal: (v: number | null) => void;
 }) {
-  if (!data.length || !totalGoal) return null;
+  const [editingTotal, setEditingTotal] = useState(false);
+  const [totalDraft, setTotalDraft]     = useState("");
+  const totalInputRef = useRef<HTMLInputElement>(null);
 
-  const pct = totalActual / totalGoal;
-  const statusText  = pct >= 1 ? "All goals met ✓" : `${totalGoal - totalActual} more tasks needed`;
+  const effectiveTotal = totalTarget ?? totalGoal;
+  if (!data.length && !totalTarget) return null;
+
+  const pct = effectiveTotal > 0 ? totalActual / effectiveTotal : 0;
+  const statusText  = pct >= 1 ? "All goals met ✓" : `${Math.max(0, effectiveTotal - totalActual)} more tasks needed`;
   const statusColor = pct >= 1 ? "text-emerald-400" : pct >= 0.6 ? "text-amber-400" : "text-red-400";
+
+  const openEdit = () => {
+    setTotalDraft(totalTarget !== null ? String(totalTarget) : "");
+    setEditingTotal(true);
+    setTimeout(() => totalInputRef.current?.focus(), 0);
+  };
+
+  const commitEdit = () => {
+    const n = parseInt(totalDraft, 10);
+    onSetTotal(isNaN(n) || n <= 0 ? null : n);
+    setEditingTotal(false);
+  };
 
   return (
     <div className="rounded-xl border border-zinc-700/60 bg-zinc-800/40 p-4 space-y-4 mb-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Target className="w-4 h-4 text-violet-400" />
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <Target className="w-4 h-4 text-violet-400 flex-shrink-0" />
           <span className="text-sm font-semibold text-zinc-200">Next Week Task Goal</span>
-          <span className={cn("text-sm font-bold ml-1", statusColor)}>
-            {totalActual} / {totalGoal}
-          </span>
+          {effectiveTotal > 0 && (
+            <span className={cn("text-sm font-bold ml-1", statusColor)}>
+              {totalActual} / {effectiveTotal}
+            </span>
+          )}
+          {effectiveTotal > 0 && (
+            <p className={cn("text-xs font-semibold hidden sm:block", statusColor)}>{statusText}</p>
+          )}
         </div>
-        <p className={cn("text-xs font-semibold", statusColor)}>{statusText}</p>
+        {editingTotal ? (
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <input
+              ref={totalInputRef}
+              type="number"
+              min={1}
+              value={totalDraft}
+              placeholder="e.g. 30"
+              onChange={(e) => setTotalDraft(e.target.value)}
+              onBlur={commitEdit}
+              onKeyDown={(e) => { if (e.key === "Enter") commitEdit(); if (e.key === "Escape") setEditingTotal(false); }}
+              className="w-20 px-2 py-1 text-sm rounded-lg bg-zinc-900 border border-zinc-600 text-zinc-100 focus:outline-none focus:border-violet-500 placeholder-zinc-600"
+            />
+            <button onClick={commitEdit} className="px-2.5 py-1 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-xs font-medium transition-colors">
+              Save
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={openEdit}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-zinc-700 hover:border-zinc-500 text-xs text-zinc-500 hover:text-zinc-300 transition-all flex-shrink-0"
+          >
+            <Pencil className="w-3 h-3" />
+            {totalTarget !== null ? "Edit total" : "Set total"}
+          </button>
+        )}
       </div>
 
       {/* Stacked bars */}
-      <div className="space-y-2">
-        {/* Actual */}
-        <div className="flex items-center gap-3">
-          <span className="w-12 text-xs text-zinc-500 text-right flex-shrink-0">Created</span>
-          <div className="relative flex-1 h-5 rounded-full bg-zinc-800 overflow-hidden flex">
-            {data.map((d) => (
-              <div
-                key={d.product}
-                title={`${d.product}: ${d.actual}`}
-                className="h-full transition-all duration-700"
-                style={{ width: `${(d.actual / totalGoal) * 100}%`, backgroundColor: d.color, opacity: 0.9 }}
-              />
-            ))}
+      {data.length > 0 && (
+        <div className="space-y-2">
+          {/* Created */}
+          <div className="flex items-center gap-3">
+            <span className="w-12 text-xs text-zinc-500 text-right flex-shrink-0">Created</span>
+            <div className="relative flex-1 h-5 rounded-full bg-zinc-800 overflow-hidden flex">
+              {data.map((d) => (
+                <div
+                  key={d.product}
+                  title={`${d.product}: ${d.actual}`}
+                  className="h-full transition-all duration-700"
+                  style={{ width: `${effectiveTotal > 0 ? (d.actual / effectiveTotal) * 100 : 0}%`, backgroundColor: d.color, opacity: 0.9 }}
+                />
+              ))}
+            </div>
+            <span className="w-12 text-xs text-zinc-400 font-semibold flex-shrink-0">{totalActual}/{effectiveTotal}</span>
           </div>
-          <span className="w-12 text-xs text-zinc-400 font-semibold flex-shrink-0">{totalActual}/{totalGoal}</span>
-        </div>
 
-        {/* Goal */}
-        <div className="flex items-center gap-3">
-          <span className="w-12 text-xs text-zinc-500 text-right flex-shrink-0">Plan</span>
-          <div className="relative flex-1 h-5 rounded-full bg-zinc-800 overflow-hidden flex">
-            {data.map((d) => (
-              <div
-                key={d.product}
-                title={`${d.product}: target ${d.goal}`}
-                className="h-full transition-all duration-700"
-                style={{ width: `${(d.goal / totalGoal) * 100}%`, backgroundColor: d.color, opacity: 0.45 }}
-              />
-            ))}
+          {/* Plan */}
+          <div className="flex items-center gap-3">
+            <span className="w-12 text-xs text-zinc-500 text-right flex-shrink-0">Plan</span>
+            <div className="relative flex-1 h-5 rounded-full bg-zinc-800 overflow-hidden flex">
+              {data.map((d) => (
+                <div
+                  key={d.product}
+                  title={`${d.product}: target ${d.goal}`}
+                  className="h-full transition-all duration-700"
+                  style={{ width: `${effectiveTotal > 0 ? (d.goal / effectiveTotal) * 100 : 0}%`, backgroundColor: d.color, opacity: 0.45 }}
+                />
+              ))}
+            </div>
+            <span className="w-12 text-xs text-zinc-400 font-semibold flex-shrink-0">{totalGoal}</span>
           </div>
-          <span className="w-12 text-xs text-zinc-400 font-semibold flex-shrink-0">{totalGoal}</span>
         </div>
-      </div>
+      )}
 
       {/* Legend */}
-      <div className="flex flex-wrap gap-x-5 gap-y-2">
-        {data.map((d) => (
-          <div key={d.product} className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: d.color }} />
-            <span className="text-xs text-zinc-400 truncate max-w-[110px]" title={d.product}>{d.product}</span>
-            <span className="text-xs font-bold text-zinc-200">{d.actual}</span>
-            <span className="text-xs text-zinc-600">/ {d.goal}</span>
-          </div>
-        ))}
-      </div>
+      {data.length > 0 && (
+        <div className="flex flex-wrap gap-x-5 gap-y-2">
+          {data.map((d) => (
+            <div key={d.product} className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: d.color }} />
+              <span className="text-xs text-zinc-400 truncate max-w-[110px]" title={d.product}>{d.product}</span>
+              <span className="text-xs font-bold text-zinc-200">{d.actual}</span>
+              <span className="text-xs text-zinc-600">/ {d.goal}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
