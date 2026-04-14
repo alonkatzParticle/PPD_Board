@@ -665,11 +665,6 @@ function ProductCard({
             <span className={cn("text-xl font-black leading-none tabular-nums", numColor)}>
               {displayNum}
             </span>
-            {remaining !== null && (
-              <span className="text-[9px] text-zinc-500 leading-none mt-0.5">
-                {committed} made
-              </span>
-            )}
           </div>
         </div>
 
