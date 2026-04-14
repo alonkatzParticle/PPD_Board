@@ -730,7 +730,7 @@ function ProductCard({
           <div className="flex-1 min-w-0">
             <p
               className={cn(
-                "text-xs font-semibold truncate leading-tight",
+                "text-sm font-semibold truncate leading-tight",
                 selected ? "text-violet-200" : "text-zinc-200"
               )}
               title={product}
@@ -762,7 +762,6 @@ function ProductCard({
         </div>
 
         <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[10px]">
-          {mondayCount > 0  && <span className="text-zinc-500">{mondayCount} monday</span>}
           {plannedCount > 0 && <><span className="text-zinc-700">·</span><span className="text-emerald-500">{plannedCount} planned</span></>}
           {committed === 0 && plannedCount === 0 && (
             <span className="text-zinc-700">no tasks yet</span>
