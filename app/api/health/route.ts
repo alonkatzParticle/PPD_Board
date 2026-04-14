@@ -2,10 +2,17 @@ import { NextResponse } from "next/server";
 import { hasDb, getDb, ensureSchema } from "@/lib/db";
 
 export async function GET() {
+  const envDiag = {
+    DATABASE_URL: process.env.DATABASE_URL ? "set" : "missing",
+    POSTGRES_DATABASE_URL: process.env.POSTGRES_DATABASE_URL ? "set" : "missing",
+    NODE_ENV: process.env.NODE_ENV,
+  };
+
   const status: Record<string, unknown> = {
     db: "not configured",
     itemsCache: null,
     goalsTable: null,
+    envDiag,
   };
 
   if (!hasDb()) {

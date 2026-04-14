@@ -12,6 +12,7 @@ type SortDir = "asc" | "desc";
 interface TaskTableProps {
   items: DashboardItem[];
   loading?: boolean;
+  hideOverdue?: boolean;
 }
 
 function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
@@ -29,7 +30,7 @@ const COLUMNS: { key: SortKey; label: string; width: string }[] = [
   { key: "timelineEnd", label: "Due Date", width: "w-36" },
 ];
 
-export function TaskTable({ items, loading }: TaskTableProps) {
+export function TaskTable({ items, loading, hideOverdue = false }: TaskTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>("timelineEnd");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
 
@@ -115,23 +116,23 @@ export function TaskTable({ items, loading }: TaskTableProps) {
             key={item.id}
             className={cn(
               "flex items-center gap-4 px-5 py-4 transition-colors hover:bg-zinc-800/40 group animate-fade-in",
-              item.isOverdue && "border-l-2 border-red-500",
-              item.isDueSoon && !item.isOverdue && "border-l-2 border-amber-500"
+              !hideOverdue && item.isOverdue && "border-l-2 border-red-500",
+              !hideOverdue && item.isDueSoon && !item.isOverdue && "border-l-2 border-amber-500"
             )}
             style={{ animationDelay: `${idx * 30}ms` }}
           >
             {/* Task name */}
             <div className="flex-1 min-w-[200px] flex items-center gap-2">
-              {item.isOverdue && (
+              {!hideOverdue && item.isOverdue && (
                 <AlertCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
               )}
-              {item.isDueSoon && !item.isOverdue && (
+              {!hideOverdue && item.isDueSoon && !item.isOverdue && (
                 <Clock className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
               )}
               <span
                 className={cn(
                   "text-sm truncate",
-                  item.isOverdue ? "text-red-200" : "text-zinc-100"
+                  !hideOverdue && item.isOverdue ? "text-red-200" : "text-zinc-100"
                 )}
                 title={item.name}
               >
@@ -158,18 +159,18 @@ export function TaskTable({ items, loading }: TaskTableProps) {
             <div
               className={cn(
                 "w-36 text-sm font-medium",
-                item.isOverdue
+                !hideOverdue && item.isOverdue
                   ? "text-red-400"
-                  : item.isDueSoon
+                  : !hideOverdue && item.isDueSoon
                   ? "text-amber-400"
                   : "text-zinc-300"
               )}
             >
               {formatDate(item.timelineEnd)}
-              {item.isOverdue && (
+              {!hideOverdue && item.isOverdue && (
                 <span className="block text-xs text-red-500/80 font-normal">Overdue</span>
               )}
-              {item.isDueSoon && !item.isOverdue && (
+              {!hideOverdue && item.isDueSoon && !item.isOverdue && (
                 <span className="block text-xs text-amber-500/80 font-normal">Due soon</span>
               )}
             </div>

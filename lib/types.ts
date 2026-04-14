@@ -101,3 +101,16 @@ export const BOARD_IDS: Record<BoardType, string> = {
   video: "5433027071",
   design: "8036329818",
 };
+
+// ── Planned Tasks ─────────────────────────────────────────────────────────────
+/** A draft task created in the dashboard — local only, never synced to Monday.com */
+export interface PlannedTask {
+  id: string;
+  boardType: BoardType;
+  weekKey: string;
+  product: string;
+  name: string;
+  assignee: string | null;
+  done: boolean;
+  createdAt: string; // ISO date string
+}

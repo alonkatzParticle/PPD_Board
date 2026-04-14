@@ -289,7 +289,6 @@ export default function DashboardPage() {
             {([
               { label: "Last Week", offset: -1 },
               { label: "This Week", offset: 0  },
-              { label: "Next Week", offset: 1  },
             ] as const).map(({ label, offset }) => (
               <button
                 key={offset}
@@ -309,13 +308,13 @@ export default function DashboardPage() {
 
           {!loadingItems && filteredItemsData && (
             <div className="flex items-center gap-2 ml-auto">
-              {overdueCount > 0 && (
+              {weekOffset !== 0 && overdueCount > 0 && (
                 <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-950/60 border border-red-800/50 text-red-300 text-xs font-medium">
                   <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
                   {overdueCount} overdue
                 </span>
               )}
-              {dueSoonCount > 0 && (
+              {weekOffset !== 0 && dueSoonCount > 0 && (
                 <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-950/60 border border-amber-800/50 text-amber-300 text-xs font-medium">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                   {dueSoonCount} due soon
@@ -341,7 +340,7 @@ export default function DashboardPage() {
         />
 
         {/* ── Task Table ── */}
-        <TaskTable items={filteredItemsData?.items ?? []} loading={loadingItems} />
+        <TaskTable items={filteredItemsData?.items ?? []} loading={loadingItems} hideOverdue={weekOffset === 0} />
       </main>
     </div>
   );

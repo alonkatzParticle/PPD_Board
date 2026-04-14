@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Layers, Inbox, CalendarRange } from "lucide-react";
+import { Layers, ListOrdered, CalendarRange, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
-  { href: "/", label: "Intake", icon: Inbox, exact: true },
-  { href: "/timeline", label: "Timeline", icon: CalendarRange, exact: false },
+  { href: "/",         label: "Queue",     icon: ListOrdered,    exact: true },
+  { href: "/timeline", label: "This Week", icon: CalendarRange,  exact: false },
+  { href: "/planning", label: "Planning",  icon: ClipboardList,  exact: false },
 ];
 
 export function NavBar() {

@@ -56,7 +56,7 @@ export function ProductSummaryPanel({
     });
   }, [boardType, weekKey]);
 
-  const canEditGoals = !!(boardType && weekKey);
+  const canEditGoals = !!(boardType && weekKey) && weekOffset !== 0;
 
   const handleTotalTarget = (value: number | null) => {
     if (!canEditGoals) return;
@@ -118,8 +118,8 @@ export function ProductSummaryPanel({
   })();
   const displayTotal = cappedAllItems.length;
 
-  const cappedProducts = displaySummary.filter((p) => !isBundle(p.product));
-  const cappedBundles  = displaySummary.filter((p) =>  isBundle(p.product));
+  const cappedProducts = displaySummary.filter((p) => !isBundle(p.product) && (weekOffset !== 0 || p.total > 0));
+  const cappedBundles  = displaySummary.filter((p) =>  isBundle(p.product) && (weekOffset !== 0 || p.total > 0));
 
   const modalItems = selectedProduct ? cappedAllItems.filter((i) => i.product === selectedProduct) : [];
 

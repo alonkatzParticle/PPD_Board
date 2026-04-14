@@ -1,5 +1,5 @@
 import { neon } from "@neondatabase/serverless";
-import type { MondayItem, ColumnMapping } from "./types";
+import type { MondayItem, ColumnMapping, BoardType, PlannedTask } from "./types";
 
 let _sql: ReturnType<typeof neon> | null = null;
 
@@ -46,6 +46,22 @@ export async function ensureSchema() {
       PRIMARY KEY (board_id, mode)
     )
   `;
+
+  // Planned tasks — dashboard-only draft tasks with assignees (never touches Monday.com)
+  await sql`
+    CREATE TABLE IF NOT EXISTS planned_tasks (
+      id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+      board_type  TEXT        NOT NULL,
+      week_key    TEXT        NOT NULL,
+      product     TEXT        NOT NULL,
+      name        TEXT        NOT NULL,
+      assignee    TEXT,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `;
+
+  // Add done column to existing tables (safe to run repeatedly)
+  await sql`ALTER TABLE planned_tasks ADD COLUMN IF NOT EXISTS done BOOLEAN NOT NULL DEFAULT false`;
 }
 
 // ── Items cache helpers ──────────────────────────────────────────────────────
@@ -101,4 +117,87 @@ export async function setItemsCache(
     console.warn("[db] setItemsCache failed:", err);
     // Non-fatal — in-memory cache still works as fallback
   }
+}
+
+// ── Planned Tasks CRUD ───────────────────────────────────────────────────────
+
+interface DbPlannedTaskRow {
+  id: string;
+  board_type: string;
+  week_key: string;
+  product: string;
+  name: string;
+  assignee: string | null;
+  done: boolean;
+  created_at: Date;
+}
+
+function toPlannedTask(row: DbPlannedTaskRow): PlannedTask {
+  return {
+    id: row.id,
+    boardType: row.board_type as BoardType,
+    weekKey: row.week_key,
+    product: row.product,
+    name: row.name,
+    assignee: row.assignee,
+    done: row.done,
+    createdAt: new Date(row.created_at).toISOString(),
+  };
+}
+
+export async function getPlannedTasks(
+  boardType: string,
+  weekKey: string
+): Promise<PlannedTask[]> {
+  const sql = getDb();
+  const rows = await sql`
+    SELECT id, board_type, week_key, product, name, assignee, done, created_at
+    FROM planned_tasks
+    WHERE board_type = ${boardType} AND week_key = ${weekKey}
+    ORDER BY created_at ASC
+  ` as DbPlannedTaskRow[];
+  return rows.map(toPlannedTask);
+}
+
+export async function createPlannedTask(
+  boardType: string,
+  weekKey: string,
+  product: string,
+  name: string,
+  assignee: string | null
+): Promise<PlannedTask> {
+  const sql = getDb();
+  const rows = await sql`
+    INSERT INTO planned_tasks (board_type, week_key, product, name, assignee)
+    VALUES (${boardType}, ${weekKey}, ${product}, ${name}, ${assignee})
+    RETURNING id, board_type, week_key, product, name, assignee, done, created_at
+  ` as DbPlannedTaskRow[];
+  return toPlannedTask(rows[0]);
+}
+
+export async function updatePlannedTask(
+  id: string,
+  updates: { name?: string; assignee?: string | null; done?: boolean }
+): Promise<PlannedTask | null> {
+  const sql = getDb();
+  const current = await sql`
+    SELECT id, board_type, week_key, product, name, assignee, done, created_at
+    FROM planned_tasks WHERE id = ${id}
+  ` as DbPlannedTaskRow[];
+  if (!current[0]) return null;
+  const newName     = updates.name     !== undefined ? updates.name     : current[0].name;
+  const newAssignee = updates.assignee !== undefined ? updates.assignee : current[0].assignee;
+  const newDone     = updates.done     !== undefined ? updates.done     : current[0].done;
+  const rows = await sql`
+    UPDATE planned_tasks
+    SET name = ${newName}, assignee = ${newAssignee}, done = ${newDone}
+    WHERE id = ${id}
+    RETURNING id, board_type, week_key, product, name, assignee, done, created_at
+  ` as DbPlannedTaskRow[];
+  return rows[0] ? toPlannedTask(rows[0]) : null;
+}
+
+export async function deletePlannedTask(id: string): Promise<void> {
+  const sql = getDb();
+  await sql`DELETE FROM planned_tasks WHERE id = ${id}`;
 }
