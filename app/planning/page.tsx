@@ -280,11 +280,9 @@ export default function PlanningPage() {
   const computeFraction = (list: ProductSummary[]) => {
     let made = 0, needed = 0;
     for (const p of list) {
-      const goal = goals.products[p.product];
-      if (!goal) continue;
       const stats = productStatsMap.get(p.product);
       made   += (stats?.mondayCount ?? 0) + (stats?.pipelineCount ?? 0);
-      needed += goal;
+      needed += goals.products[p.product] ?? 0;
     }
     return { made, needed };
   };
@@ -389,19 +387,14 @@ export default function PlanningPage() {
                 <Package className="w-3.5 h-3.5" />
                 Products{" "}
                 <span className="text-xs font-semibold flex items-center gap-0.5">
-                  {productsFrac.needed > 0 ? (
-                    <>
-                      <span className={cn(
-                        productsFrac.made >= productsFrac.needed ? "text-emerald-400" :
-                        productsFrac.made >= productsFrac.needed * 0.6 ? "text-amber-400" :
-                        "text-red-400"
-                      )}>{productsFrac.made}</span>
-                      <span className="text-zinc-600">/</span>
-                      <span className="text-emerald-400">{productsFrac.needed}</span>
-                    </>
-                  ) : (
-                    <span className="text-zinc-500">{productsFrac.made}</span>
-                  )}
+                  <span className={cn(
+                    productsFrac.needed === 0 ? "text-zinc-500" :
+                    productsFrac.made >= productsFrac.needed ? "text-emerald-400" :
+                    productsFrac.made >= productsFrac.needed * 0.6 ? "text-amber-400" :
+                    "text-red-400"
+                  )}>{productsFrac.made}</span>
+                  <span className="text-zinc-600">/</span>
+                  <span className={productsFrac.needed === 0 ? "text-zinc-600" : "text-emerald-400"}>{productsFrac.needed}</span>
                 </span>
               </button>
               <button
@@ -416,19 +409,14 @@ export default function PlanningPage() {
                 <ShoppingBag className="w-3.5 h-3.5" />
                 Bundles{" "}
                 <span className="text-xs font-semibold flex items-center gap-0.5">
-                  {bundlesFrac.needed > 0 ? (
-                    <>
-                      <span className={cn(
-                        bundlesFrac.made >= bundlesFrac.needed ? "text-emerald-400" :
-                        bundlesFrac.made >= bundlesFrac.needed * 0.6 ? "text-amber-400" :
-                        "text-red-400"
-                      )}>{bundlesFrac.made}</span>
-                      <span className="text-zinc-600">/</span>
-                      <span className="text-emerald-400">{bundlesFrac.needed}</span>
-                    </>
-                  ) : (
-                    <span className="text-zinc-500">{bundlesFrac.made}</span>
-                  )}
+                  <span className={cn(
+                    bundlesFrac.needed === 0 ? "text-zinc-500" :
+                    bundlesFrac.made >= bundlesFrac.needed ? "text-emerald-400" :
+                    bundlesFrac.made >= bundlesFrac.needed * 0.6 ? "text-amber-400" :
+                    "text-red-400"
+                  )}>{bundlesFrac.made}</span>
+                  <span className="text-zinc-600">/</span>
+                  <span className={bundlesFrac.needed === 0 ? "text-zinc-600" : "text-emerald-400"}>{bundlesFrac.needed}</span>
                 </span>
               </button>
             </div>
@@ -698,7 +686,7 @@ function ProductCard({
 
   const committed = mondayCount + pipelineCount;
   const remaining  = goalTarget !== null ? Math.max(0, goalTarget - committed) : null;
-  const displayNum = remaining !== null ? remaining : committed;
+  const displayNum: number | string = remaining === null ? committed : remaining === 0 ? "Done" : remaining;
   const numColor   = remaining === null
     ? (selected ? "text-violet-400" : "text-zinc-400")
     : remaining === 0   ? "text-emerald-400"
@@ -774,10 +762,9 @@ function ProductCard({
         </div>
 
         <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[10px]">
-          {mondayCount > 0   && <span className="text-zinc-500">{mondayCount} monday</span>}
-          {plannedCount > 0  && <><span className="text-zinc-700">·</span><span className="text-emerald-500">{plannedCount} planned</span></>}
-          {pipelineCount > 0 && <><span className="text-zinc-700">·</span><span className="text-amber-600">{pipelineCount} no date</span></>}
-          {mondayCount === 0 && plannedCount === 0 && pipelineCount === 0 && (
+          {mondayCount > 0  && <span className="text-zinc-500">{mondayCount} monday</span>}
+          {plannedCount > 0 && <><span className="text-zinc-700">·</span><span className="text-emerald-500">{plannedCount} planned</span></>}
+          {committed === 0 && plannedCount === 0 && (
             <span className="text-zinc-700">no tasks yet</span>
           )}
         </div>
