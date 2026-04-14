@@ -592,6 +592,13 @@ function ProductCard({
   const goalInputRef = useRef<HTMLInputElement>(null);
 
   const committed = mondayCount + pipelineCount;
+  const remaining  = goalTarget !== null ? Math.max(0, goalTarget - committed) : null;
+  const displayNum = remaining !== null ? remaining : committed;
+  const numColor   = remaining === null
+    ? (selected ? "text-violet-400" : "text-zinc-400")
+    : remaining === 0   ? "text-emerald-400"
+    : remaining <= 3    ? "text-amber-400"
+    : "text-red-400";
   const pct = goalTarget ? Math.min(committed / goalTarget, 1) : 0;
   const barColor = !goalTarget
     ? "bg-violet-500"
@@ -654,14 +661,16 @@ function ProductCard({
               </div>
             )}
           </div>
-          <span
-            className={cn(
-              "text-xl font-black leading-none flex-shrink-0 tabular-nums",
-              selected ? "text-violet-400" : "text-zinc-400"
+          <div className="flex flex-col items-end flex-shrink-0">
+            <span className={cn("text-xl font-black leading-none tabular-nums", numColor)}>
+              {displayNum}
+            </span>
+            {remaining !== null && (
+              <span className="text-[9px] text-zinc-500 leading-none mt-0.5">
+                {committed} made
+              </span>
             )}
-          >
-            {committed}
-          </span>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[10px]">
