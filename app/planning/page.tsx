@@ -280,9 +280,11 @@ export default function PlanningPage() {
   const computeFraction = (list: ProductSummary[]) => {
     let made = 0, needed = 0;
     for (const p of list) {
+      const goal = goals.products[p.product];
+      if (!goal) continue;
       const stats = productStatsMap.get(p.product);
       made   += (stats?.mondayCount ?? 0) + (stats?.pipelineCount ?? 0);
-      needed += goals.products[p.product] ?? 0;
+      needed += goal;
     }
     return { made, needed };
   };
