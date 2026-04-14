@@ -271,6 +271,21 @@ export default function PlanningPage() {
   const sortedBundles  = [...bundles].sort(sortFn);
   const displayList    = showBundles ? sortedBundles : sortedProducts;
 
+  // Toggle badge: made / needed for each group
+  const computeFraction = (list: ProductSummary[]) => {
+    let made = 0, needed = 0;
+    for (const p of list) {
+      const goal = goals.products[p.product];
+      if (!goal) continue;
+      const stats = productStatsMap.get(p.product);
+      made   += (stats?.mondayCount ?? 0) + (stats?.pipelineCount ?? 0);
+      needed += goal;
+    }
+    return { made, needed };
+  };
+  const productsFrac = computeFraction(products);
+  const bundlesFrac  = computeFraction(bundles);
+
   // Panel data for the selected product
   const panelMondayItems  = nextWeekData?.items.filter((i) => i.product === selectedProduct) ?? [];
   const panelPlannedTasks = plannedTasks.filter((t) => t.product === selectedProduct);
@@ -365,7 +380,20 @@ export default function PlanningPage() {
                 )}
               >
                 <Package className="w-3.5 h-3.5" />
-                Products <span className="text-xs opacity-70">({products.length})</span>
+                Products{" "}
+                {productsFrac.needed > 0 ? (
+                  <span className="text-xs font-semibold flex items-center gap-0.5">
+                    <span className={cn(
+                      productsFrac.made >= productsFrac.needed ? "text-emerald-400" :
+                      productsFrac.made >= productsFrac.needed * 0.6 ? "text-amber-400" :
+                      "text-red-400"
+                    )}>{productsFrac.made}</span>
+                    <span className="text-zinc-600">/</span>
+                    <span className="text-emerald-400">{productsFrac.needed}</span>
+                  </span>
+                ) : (
+                  <span className="text-xs opacity-70">({products.length})</span>
+                )}
               </button>
               <button
                 onClick={() => { setShowBundles(true); setSelectedProduct(null); }}
@@ -377,7 +405,20 @@ export default function PlanningPage() {
                 )}
               >
                 <ShoppingBag className="w-3.5 h-3.5" />
-                Bundles <span className="text-xs opacity-70">({bundles.length})</span>
+                Bundles{" "}
+                {bundlesFrac.needed > 0 ? (
+                  <span className="text-xs font-semibold flex items-center gap-0.5">
+                    <span className={cn(
+                      bundlesFrac.made >= bundlesFrac.needed ? "text-emerald-400" :
+                      bundlesFrac.made >= bundlesFrac.needed * 0.6 ? "text-amber-400" :
+                      "text-red-400"
+                    )}>{bundlesFrac.made}</span>
+                    <span className="text-zinc-600">/</span>
+                    <span className="text-emerald-400">{bundlesFrac.needed}</span>
+                  </span>
+                ) : (
+                  <span className="text-xs opacity-70">({bundles.length})</span>
+                )}
               </button>
             </div>
 
@@ -729,7 +770,7 @@ function ProductCard({
         ) : (
           <button
             onClick={openGoalEdit}
-            className="w-full py-1.5 rounded-lg border border-dashed border-zinc-800 hover:border-zinc-600 text-[11px] text-zinc-700 hover:text-zinc-400 transition-all"
+            className="w-full py-1.5 rounded-lg border border-dashed border-zinc-700 hover:border-violet-500/50 text-[11px] text-zinc-500 hover:text-violet-400 transition-all"
           >
             + Set weekly goal
           </button>
