@@ -225,7 +225,7 @@ export default function PlanningPage() {
   // Full product list: Monday products + any extra from planned tasks
   const allProducts = useMemo(() => {
     const mondayProducts = nextWeekData?.productSummary ?? [];
-    const plannedProductNames = [...new Set(plannedTasks.map((t) => t.product))];
+    const plannedProductNames = Array.from(new Set(plannedTasks.map((t) => t.product)));
     const extra = plannedProductNames
       .filter((p) => !mondayProducts.find((m) => m.product === p))
       .map((p): ProductSummary => ({ product: p, total: 0, byStatus: {} }));
@@ -277,7 +277,7 @@ export default function PlanningPage() {
 
   const plannedCountFor  = (product: string) => plannedTasks.filter((t) => t.product === product).length;
   const assigneesFor     = (product: string): string[] =>
-    [...new Set(plannedTasks.filter((t) => t.product === product && t.assignee).map((t) => t.assignee as string))];
+    Array.from(new Set(plannedTasks.filter((t) => t.product === product && t.assignee).map((t) => t.assignee as string)));
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
