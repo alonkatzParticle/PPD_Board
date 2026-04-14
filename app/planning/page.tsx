@@ -95,7 +95,7 @@ export default function PlanningPage() {
   }, []);
 
   // ── Load all weeks data ────────────────────────────────────────────────────
-  const loadAllWeeks = useCallback(async (forceRefresh = false) => {
+  const loadAllWeeks = useCallback(async (forceRefresh = false, silent = false) => {
     if (!boardsData) return;
     const boardId = boardsData[activeBoard]?.id;
     if (!boardId) return;
@@ -107,7 +107,7 @@ export default function PlanningPage() {
       if (hit) { setAllWeeksData(hit); return; }
     }
 
-    setLoadingItems(true);
+    if (!silent) setLoadingItems(true);
     setError(null);
     try {
       if (forceRefresh) bustCacheByPrefix(`allweeks:${boardId}`);
@@ -124,9 +124,9 @@ export default function PlanningPage() {
       setAllWeeksData(data);
       setLastRefresh(new Date());
     } catch (e) {
-      setError((e as Error).message);
+      if (!silent) setError((e as Error).message);
     } finally {
-      setLoadingItems(false);
+      if (!silent) setLoadingItems(false);
     }
   }, [activeBoard, boardsData]);
 
@@ -150,6 +150,18 @@ export default function PlanningPage() {
   useEffect(() => {
     loadPlannedTasks();
   }, [loadPlannedTasks]);
+
+  // ── Auto-refresh every 10 min during Israeli working hours (8am–6pm local) ──
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const hour = new Date().getHours(); // local time — Israel timezone
+      if (hour >= 8 && hour < 18) {
+        loadAllWeeks(true, true); // force-refresh, silent (no spinner)
+        loadPlannedTasks();
+      }
+    }, 10 * 60 * 1000); // every 10 minutes
+    return () => clearInterval(interval);
+  }, [loadAllWeeks, loadPlannedTasks]);
 
   // ── Board switch ───────────────────────────────────────────────────────────
   const handleBoardSwitch = (board: BoardType) => {
@@ -260,16 +272,24 @@ export default function PlanningPage() {
   const products = allProducts.filter((p) => !isBundle(p.product));
   const bundles  = allProducts.filter((p) =>  isBundle(p.product));
 
-  // Sort: 1) has a goal set, 2) most Monday tasks, 3) most common on board
+  // Sort: 1) most tasks still needed to meet weekly goal, 2) most next-week tasks, 3) most tasks on board overall
   const sortFn = (a: ProductSummary, b: ProductSummary) => {
-    const aGoal = goals.products[a.product] ? 1 : 0;
-    const bGoal = goals.products[b.product] ? 1 : 0;
-    if (bGoal !== aGoal) return bGoal - aGoal;
     const aStats = productStatsMap.get(a.product);
     const bStats = productStatsMap.get(b.product);
-    const aC = (aStats?.mondayCount ?? 0) + (aStats?.pipelineCount ?? 0);
-    const bC = (bStats?.mondayCount ?? 0) + (bStats?.pipelineCount ?? 0);
-    if (bC !== aC) return bC - aC;
+    const aCommitted = (aStats?.mondayCount ?? 0) + (aStats?.pipelineCount ?? 0);
+    const bCommitted = (bStats?.mondayCount ?? 0) + (bStats?.pipelineCount ?? 0);
+
+    // 1. Remaining tasks to hit goal (no-goal products use -1 so they sink below goal-met ones)
+    const aGoal = goals.products[a.product] ?? null;
+    const bGoal = goals.products[b.product] ?? null;
+    const aRemaining = aGoal !== null ? Math.max(0, aGoal - aCommitted) : -1;
+    const bRemaining = bGoal !== null ? Math.max(0, bGoal - bCommitted) : -1;
+    if (bRemaining !== aRemaining) return bRemaining - aRemaining;
+
+    // 2. Most next-week tasks (Monday + pipeline)
+    if (bCommitted !== aCommitted) return bCommitted - aCommitted;
+
+    // 3. Most tasks on board overall
     return b.total - a.total;
   };
   const sortedProducts = [...products].sort(sortFn);
