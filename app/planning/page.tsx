@@ -388,19 +388,21 @@ export default function PlanningPage() {
               >
                 <Package className="w-3.5 h-3.5" />
                 Products{" "}
-                {productsFrac.needed > 0 ? (
-                  <span className="text-xs font-semibold flex items-center gap-0.5">
-                    <span className={cn(
-                      productsFrac.made >= productsFrac.needed ? "text-emerald-400" :
-                      productsFrac.made >= productsFrac.needed * 0.6 ? "text-amber-400" :
-                      "text-red-400"
-                    )}>{productsFrac.made}</span>
-                    <span className="text-zinc-600">/</span>
-                    <span className="text-emerald-400">{productsFrac.needed}</span>
-                  </span>
-                ) : (
-                  <span className="text-xs opacity-70">({products.length})</span>
-                )}
+                <span className="text-xs font-semibold flex items-center gap-0.5">
+                  {productsFrac.needed > 0 ? (
+                    <>
+                      <span className={cn(
+                        productsFrac.made >= productsFrac.needed ? "text-emerald-400" :
+                        productsFrac.made >= productsFrac.needed * 0.6 ? "text-amber-400" :
+                        "text-red-400"
+                      )}>{productsFrac.made}</span>
+                      <span className="text-zinc-600">/</span>
+                      <span className="text-emerald-400">{productsFrac.needed}</span>
+                    </>
+                  ) : (
+                    <span className="text-zinc-500">{productsFrac.made}</span>
+                  )}
+                </span>
               </button>
               <button
                 onClick={() => { setShowBundles(true); setSelectedProduct(null); }}
@@ -413,19 +415,21 @@ export default function PlanningPage() {
               >
                 <ShoppingBag className="w-3.5 h-3.5" />
                 Bundles{" "}
-                {bundlesFrac.needed > 0 ? (
-                  <span className="text-xs font-semibold flex items-center gap-0.5">
-                    <span className={cn(
-                      bundlesFrac.made >= bundlesFrac.needed ? "text-emerald-400" :
-                      bundlesFrac.made >= bundlesFrac.needed * 0.6 ? "text-amber-400" :
-                      "text-red-400"
-                    )}>{bundlesFrac.made}</span>
-                    <span className="text-zinc-600">/</span>
-                    <span className="text-emerald-400">{bundlesFrac.needed}</span>
-                  </span>
-                ) : (
-                  <span className="text-xs opacity-70">({bundles.length})</span>
-                )}
+                <span className="text-xs font-semibold flex items-center gap-0.5">
+                  {bundlesFrac.needed > 0 ? (
+                    <>
+                      <span className={cn(
+                        bundlesFrac.made >= bundlesFrac.needed ? "text-emerald-400" :
+                        bundlesFrac.made >= bundlesFrac.needed * 0.6 ? "text-amber-400" :
+                        "text-red-400"
+                      )}>{bundlesFrac.made}</span>
+                      <span className="text-zinc-600">/</span>
+                      <span className="text-emerald-400">{bundlesFrac.needed}</span>
+                    </>
+                  ) : (
+                    <span className="text-zinc-500">{bundlesFrac.made}</span>
+                  )}
+                </span>
               </button>
             </div>
 
