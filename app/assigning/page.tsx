@@ -29,6 +29,12 @@ interface AllWeeksData {
 // Items with this status (case-insensitive) count as "assigned"
 const isAssignedStatus = (status: string) => status.toLowerCase().includes("pending");
 
+const SEGMENT_COLORS = [
+  "#8B5CF6", "#06B6D4", "#F59E0B", "#10B981", "#EF4444",
+  "#3B82F6", "#EC4899", "#84CC16", "#F97316", "#6366F1",
+  "#14B8A6", "#A855F7", "#22C55E", "#FB923C", "#60A5FA",
+];
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function AssigningPage() {
@@ -234,6 +240,20 @@ export default function AssigningPage() {
           </div>
         )}
 
+        {/* ── Assignment progress bar ───────────────────────────────────────── */}
+        {!loadingItems && (() => {
+          const withGoal = productData.filter(
+            (p): p is typeof p & { goal: number } => p.goal !== null && p.goal > 0
+          );
+          if (withGoal.length === 0) return null;
+          return (
+            <AssigningGoalBar
+              productsWithGoal={withGoal}
+              totalTarget={goals.totalTarget}
+            />
+          );
+        })()}
+
         {/* ── Product grid ─────────────────────────────────────────────────── */}
         {loadingItems ? (
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
@@ -323,6 +343,72 @@ export default function AssigningPage() {
         })()}
 
       </main>
+    </div>
+  );
+}
+
+// ── Assigning goal bar ────────────────────────────────────────────────────────
+
+function AssigningGoalBar({
+  productsWithGoal, totalTarget,
+}: {
+  productsWithGoal: { product: string; assigned: number; goal: number }[];
+  totalTarget: number | null;
+}) {
+  const sumGoals      = productsWithGoal.reduce((s, p) => s + p.goal, 0);
+  const effectiveTotal = totalTarget ?? sumGoals;
+  const totalAssigned  = productsWithGoal.reduce((s, p) => s + p.assigned, 0);
+
+  if (effectiveTotal === 0) return null;
+
+  const pct         = totalAssigned / effectiveTotal;
+  const remaining   = Math.max(0, effectiveTotal - totalAssigned);
+  const statusText  = pct >= 1 ? "All assigned ✓" : `${remaining} more to assign`;
+  const statusColor = pct >= 1 ? "text-emerald-400" : pct >= 0.6 ? "text-amber-400" : "text-red-400";
+
+  return (
+    <div className="rounded-xl border border-zinc-700/60 bg-zinc-800/40 p-4 space-y-3">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <BarChart3 className="w-4 h-4 text-violet-400" />
+          <span className="text-sm font-semibold text-zinc-200">Assignment Progress</span>
+          <span className={cn("text-sm font-bold ml-1", statusColor)}>
+            {totalAssigned} / {effectiveTotal}
+          </span>
+        </div>
+        <p className={cn("text-xs font-semibold", statusColor)}>{statusText}</p>
+      </div>
+
+      {/* Stacked bar */}
+      <div className="h-5 rounded-full bg-zinc-800 overflow-hidden flex">
+        {productsWithGoal.map((p, i) => {
+          const w = effectiveTotal > 0 ? (p.assigned / effectiveTotal) * 100 : 0;
+          return (
+            <div
+              key={p.product}
+              title={`${p.product}: ${p.assigned}`}
+              className="h-full transition-all duration-700"
+              style={{ width: `${w}%`, backgroundColor: SEGMENT_COLORS[i % SEGMENT_COLORS.length], opacity: 0.9 }}
+            />
+          );
+        })}
+      </div>
+
+      {/* Legend */}
+      <div className="flex flex-wrap gap-x-5 gap-y-2">
+        {productsWithGoal.map((p, i) => (
+          <div key={p.product} className="flex items-center gap-1.5">
+            <span
+              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+              style={{ backgroundColor: SEGMENT_COLORS[i % SEGMENT_COLORS.length] }}
+            />
+            <span className="text-xs text-zinc-400 truncate max-w-[110px]" title={p.product}>{p.product}</span>
+            <span className="text-xs font-bold text-zinc-200">{p.assigned}</span>
+            <span className="text-xs text-zinc-600">/ {p.goal}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
