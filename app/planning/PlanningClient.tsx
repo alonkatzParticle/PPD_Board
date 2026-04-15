@@ -57,6 +57,7 @@ export function PlanningClient({
   const [dbError, setDbError]             = useState(false);
   const [error, setError]                 = useState<string | null>(null);
   const [lastRefresh, setLastRefresh]     = useState<Date | null>(null);
+  const [isRefreshing, setIsRefreshing]   = useState(false);
 
   // Track whether we've served the SSR data for the initial board yet
   const itemsLoadSkipped  = useRef(!!initialAllWeeksData);
@@ -326,14 +327,21 @@ export function PlanningClient({
             )}
             <button
               id="refresh-btn"
-              onClick={() => { loadAllWeeks(true, false, true); loadPlannedTasks(); }}
-              disabled={loadingItems}
+              onClick={async () => {
+                setIsRefreshing(true);
+                await Promise.all([
+                  loadAllWeeks(true, true, true),
+                  loadPlannedTasks()
+                ]);
+                setIsRefreshing(false);
+              }}
+              disabled={isRefreshing}
               className={cn(
                 "flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-all border border-transparent hover:border-zinc-700",
-                loadingItems && "opacity-50 cursor-not-allowed"
+                isRefreshing && "opacity-50 cursor-not-allowed"
               )}
             >
-              <RefreshCw className={cn("w-3.5 h-3.5", loadingItems && "animate-spin")} />
+              <RefreshCw className={cn("w-3.5 h-3.5", isRefreshing && "animate-spin")} />
               Refresh
             </button>
           </div>

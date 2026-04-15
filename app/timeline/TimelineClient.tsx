@@ -41,6 +41,7 @@ export function TimelineClient({
   const [error, setError]                 = useState<string | null>(null);
   const [lastRefresh, setLastRefresh]     = useState<Date | null>(null);
   const [hasNewData, setHasNewData]       = useState(false);
+  const [isRefreshing, setIsRefreshing]   = useState(false);
   const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const itemsLoadSkipped  = useRef(!!initialAllWeeksData);
@@ -189,14 +190,18 @@ export function TimelineClient({
             {lastRefresh && !hasNewData && <span className="text-xs text-zinc-600 hidden sm:block">Updated {lastRefresh.toLocaleTimeString()}</span>}
             <button
               id="refresh-btn"
-              onClick={() => loadAllWeeks(true, false, true)}
-              disabled={loadingItems}
+              onClick={async () => {
+                setIsRefreshing(true);
+                await loadAllWeeks(true, true, true);
+                setIsRefreshing(false);
+              }}
+              disabled={isRefreshing}
               className={cn(
                 "flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-all border border-transparent hover:border-zinc-700",
-                loadingItems && "opacity-50 cursor-not-allowed"
+                isRefreshing && "opacity-50 cursor-not-allowed"
               )}
             >
-              <RefreshCw className={cn("w-3.5 h-3.5", loadingItems && "animate-spin")} />
+              <RefreshCw className={cn("w-3.5 h-3.5", isRefreshing && "animate-spin")} />
               Refresh
             </button>
           </div>

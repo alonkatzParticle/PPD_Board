@@ -38,6 +38,7 @@ export function AssigningClient({
   const [loadingItems, setLoadingItems] = useState(false);
   const [error, setError]               = useState<string | null>(null);
   const [lastRefresh, setLastRefresh]   = useState<Date | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const itemsLoadSkipped = useRef(!!initialAllWeeksData);
   const initialBoardRef  = useRef(initialBoard);
@@ -182,14 +183,21 @@ export function AssigningClient({
             )}
             <button
               id="refresh-btn"
-              onClick={() => { loadItems(true, false, true); fetchWeekGoals(activeBoard, weekKey).then(setGoals); }}
-              disabled={loadingItems}
+              onClick={async () => {
+                setIsRefreshing(true);
+                await Promise.all([
+                  loadItems(true, true, true),
+                  fetchWeekGoals(activeBoard, weekKey).then(setGoals)
+                ]);
+                setIsRefreshing(false);
+              }}
+              disabled={isRefreshing}
               className={cn(
                 "flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-all border border-transparent hover:border-zinc-700",
-                loadingItems && "opacity-50 cursor-not-allowed"
+                isRefreshing && "opacity-50 cursor-not-allowed"
               )}
             >
-              <RefreshCw className={cn("w-3.5 h-3.5", loadingItems && "animate-spin")} />
+              <RefreshCw className={cn("w-3.5 h-3.5", isRefreshing && "animate-spin")} />
               Refresh
             </button>
           </div>
