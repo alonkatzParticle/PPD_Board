@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ChevronUp, ChevronDown, AlertCircle, Clock, Calendar } from "lucide-react";
 import type { DashboardItem } from "@/lib/types";
 import { StatusBadge } from "./StatusBadge";
-import { formatDate, formatTaskName, cn } from "@/lib/utils";
+import { formatDate, formatTaskName, getMondayItemUrl, cn } from "@/lib/utils";
 
 type SortKey = "timelineEnd" | "product" | "name" | "status" | "groupTitle";
 type SortDir = "asc" | "desc";
@@ -112,10 +112,13 @@ export function TaskTable({ items, loading, hideOverdue = false }: TaskTableProp
       {/* Rows */}
       <div className="divide-y divide-zinc-800/60">
         {sorted.map((item, idx) => (
-          <div
+          <a
             key={item.id}
+            href={getMondayItemUrl(item)}
+            target="_blank"
+            rel="noopener noreferrer"
             className={cn(
-              "flex items-center gap-4 px-5 py-4 transition-colors hover:bg-zinc-800/40 group animate-fade-in",
+              "flex items-center gap-4 px-5 py-4 transition-colors hover:bg-zinc-800/40 group animate-fade-in cursor-pointer",
               !hideOverdue && item.isOverdue && "border-l-2 border-red-500",
               !hideOverdue && item.isDueSoon && !item.isOverdue && "border-l-2 border-amber-500"
             )}
@@ -174,7 +177,7 @@ export function TaskTable({ items, loading, hideOverdue = false }: TaskTableProp
                 <span className="block text-xs text-amber-500/80 font-normal">Due soon</span>
               )}
             </div>
-          </div>
+          </a>
         ))}
       </div>
     </div>

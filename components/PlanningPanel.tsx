@@ -7,7 +7,7 @@ import {
 import type { DashboardItem, PlannedTask } from "@/lib/types";
 import { TEAM_MEMBERS } from "@/lib/team";
 import { StatusBadge } from "@/components/StatusBadge";
-import { formatDate, formatTaskName, cn } from "@/lib/utils";
+import { formatDate, formatTaskName, getMondayItemUrl, cn } from "@/lib/utils";
 
 // Base URL of the external Task Creator site
 const TASK_CREATOR_BASE = "https://form-nine-sooty.vercel.app/";
@@ -205,9 +205,12 @@ function SectionLabel({ icon, children }: { icon: React.ReactNode; children: Rea
 
 function MondayTaskRow({ item }: { item: DashboardItem }) {
   return (
-    <div
+    <a
+      href={getMondayItemUrl(item)}
+      target="_blank"
+      rel="noopener noreferrer"
       className={cn(
-        "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-zinc-800/40",
+        "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-zinc-800/40 cursor-pointer",
         item.isPipeline && "border-l-2 border-amber-500/50"
       )}
     >
@@ -226,7 +229,7 @@ function MondayTaskRow({ item }: { item: DashboardItem }) {
       >
         {formatDate(item.timelineEnd)}
       </span>
-    </div>
+    </a>
   );
 }
 

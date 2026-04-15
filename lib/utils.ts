@@ -5,7 +5,7 @@ import {
   startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO as parse,
 } from "date-fns";
 import type { DashboardItem, MondayItem, MondayColumnValue, BoardType, ColumnMapping } from "./types";
-import { MARKETING_DEPARTMENTS, PIPELINE_STATUSES } from "./types";
+import { MARKETING_DEPARTMENTS, PIPELINE_STATUSES, BOARD_IDS } from "./types";
 
 // ── Week Window ────────────────────────────────────────────────────────────
 
@@ -91,6 +91,11 @@ export function getPipelineTasks(
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+/** Build the Monday.com deep-link URL for an item */
+export function getMondayItemUrl(item: DashboardItem): string {
+  return `https://particle-for-men.monday.com/boards/${BOARD_IDS[item.boardType]}/items/${item.id}`;
 }
 
 /** Extract the display label from a Monday task name — everything after the last "|" */

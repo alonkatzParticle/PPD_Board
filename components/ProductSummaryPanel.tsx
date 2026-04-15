@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Package, ShoppingBag, ChevronDown, ChevronUp, X, Pencil, Check, Target } from "lucide-react";
 import type { ProductSummary, DashboardItem, BoardType } from "@/lib/types";
 import { StatusBadge } from "./StatusBadge";
-import { formatDate, formatTaskName, cn, buildProductSummary } from "@/lib/utils";
+import { formatDate, formatTaskName, getMondayItemUrl, cn, buildProductSummary } from "@/lib/utils";
 import {
   getWeekGoals, fetchWeekGoals, setTotalTarget, setProductTarget,
   type WeekGoals,
@@ -255,10 +255,13 @@ export function ProductSummaryPanel({
                 </div>
               ) : (
                 modalItems.map((item) => (
-                  <div
+                  <a
                     key={item.id}
+                    href={getMondayItemUrl(item)}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className={cn(
-                      "flex items-center gap-4 px-6 py-3.5 hover:bg-zinc-800/40 transition-colors",
+                      "flex items-center gap-4 px-6 py-3.5 hover:bg-zinc-800/40 transition-colors cursor-pointer",
                       item.isPipeline  && "border-l-2 border-violet-500/60 bg-violet-950/10",
                       item.isOverdue   && "border-l-2 border-red-500",
                       item.isDueSoon && !item.isOverdue && "border-l-2 border-amber-500"
@@ -275,7 +278,7 @@ export function ProductSummaryPanel({
                     )}>
                       {item.isPipeline ? "Pipeline" : item.timelineEnd ? formatDate(item.timelineEnd) : ""}
                     </span>
-                  </div>
+                  </a>
                 ))
               )}
             </div>
