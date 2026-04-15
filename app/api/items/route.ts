@@ -1,261 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { mondayQuery } from "@/lib/monday";
-import { normalizeMondayItem, detectColumnMapping, buildProductSummary, filterByWeekWindow, getWeekWindow, getPipelineTasks } from "@/lib/utils";
-import type { BoardType, MondayItem, ColumnMapping, ItemsMode } from "@/lib/types";
-
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-interface ColumnsAndGroupsResponse {
-  boards: {
-    id: string;
-    columns: { id: string; title: string; type: string; settings_str: string }[];
-    groups: { id: string; title: string }[];
-  }[];
-}
-
-interface BoardPageResponse {
-  boards: {
-    id: string;
-    items_page: { cursor: string | null; items: MondayItem[] };
-  }[];
-}
-
-interface GroupPageResponse {
-  boards: {
-    groups: {
-      id: string;
-      title: string;
-      items_page: { cursor: string | null; items: MondayItem[] };
-    }[];
-  }[];
-}
-
-interface NextPageResponse {
-  next_items_page: { cursor: string | null; items: MondayItem[] };
-}
-
-interface BoardCache {
-  items: MondayItem[];
-  columnMapping: ColumnMapping;
-  fetchedAt: number;
-}
-
-// ── Cache ─────────────────────────────────────────────────────────────────────
-// Separate keys per board+mode so intake and timeline don't evict each other.
-
-const boardItemCache = new Map<string, BoardCache>();
-const inflightFetches = new Map<string, Promise<BoardCache>>();
-const BOARD_ITEM_TTL = 5 * 60 * 1000; // 5 minutes
-
-// ── Keywords used to match intake-stage group names ──────────────────────────
-// Groups whose title contains any of these words (case-insensitive) are fetched.
-const INTAKE_STAGE_KEYWORDS = ["form request", "pending", "ready for assignment"];
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function buildItemFields(colIds: string[]): string {
-  const filter = colIds.length > 0
-    ? `ids: [${colIds.map((id) => `"${id}"`).join(", ")}]`
-    : "";
-  return `id name group { id title } column_values(${filter}) { id text value type }`;
-}
-
-/** Follow next_items_page cursors and accumulate results */
-async function drainCursor(
-  firstItems: MondayItem[],
-  firstCursor: string | null,
-  itemFields: string
-): Promise<MondayItem[]> {
-  const all = [...firstItems];
-  let cursor = firstCursor;
-  while (cursor) {
-    const next = await mondayQuery<NextPageResponse>(
-      `query { next_items_page(limit: 500, cursor: "${cursor}") { cursor items { ${itemFields} } } }`
-    );
-    cursor = next.next_items_page?.cursor ?? null;
-    all.push(...(next.next_items_page?.items ?? []));
-  }
-  return all;
-}
-
-// ── Intake fetch: query only the groups matching our intake stage keywords ────
-// "Form Requests", "Video Editor Pending", "Ready For Assignment" → ~1-2 seconds
-// vs fetching the entire board (13,500 items → 50+ seconds)
-
-async function fetchIntakeItems(
-  boardId: string,
-  columnMapping: ColumnMapping,
-  allGroups: { id: string; title: string }[]
-): Promise<MondayItem[]> {
-  // Find board groups whose title contains any intake keyword
-  const intakeGroupIds = allGroups
-    .filter((g) =>
-      INTAKE_STAGE_KEYWORDS.some((kw) => g.title.toLowerCase().includes(kw))
-    )
-    .map((g) => g.id);
-
-  if (intakeGroupIds.length === 0) return [];
-
-  const colIds = [
-    columnMapping.timeline,
-    columnMapping.department,
-    columnMapping.product,
-    columnMapping.status,
-  ].filter(Boolean) as string[];
-
-  const itemFields = buildItemFields(colIds);
-  const groupIdsArg = intakeGroupIds.map((id) => `"${id}"`).join(", ");
-
-  const data = await mondayQuery<GroupPageResponse>(`
-    query {
-      boards(ids: [${boardId}]) {
-        groups(ids: [${groupIdsArg}]) {
-          id title
-          items_page(limit: 500) {
-            cursor
-            items { ${itemFields} }
-          }
-        }
-      }
-    }
-  `);
-
-  const groups = data.boards[0]?.groups ?? [];
-  const all: MondayItem[] = [];
-
-  for (const group of groups) {
-    const page = group.items_page;
-    const drained = await drainCursor(page.items ?? [], page.cursor ?? null, itemFields);
-    all.push(...drained);
-  }
-
-  return all;
-}
-
-// ── Timeline fetch: board-level query filtered by timeline is_not_empty ───────
-// Only items that have a scheduled timeline — cuts ~13,500 → ~600 items
-
-async function fetchTimelineItems(
-  boardId: string,
-  columnMapping: ColumnMapping
-): Promise<MondayItem[]> {
-  const colIds = [
-    columnMapping.timeline,
-    columnMapping.department,
-    columnMapping.product,
-    columnMapping.status,
-  ].filter(Boolean) as string[];
-
-  const itemFields = buildItemFields(colIds);
-
-  const queryParams = columnMapping.timeline
-    ? `query_params: { rules: [{ column_id: "${columnMapping.timeline}", compare_value: [], operator: is_not_empty }] }`
-    : "";
-
-  const firstData = await mondayQuery<BoardPageResponse>(`
-    query {
-      boards(ids: [${boardId}]) {
-        items_page(limit: 500, ${queryParams}) {
-          cursor
-          items { ${itemFields} }
-        }
-      }
-    }
-  `);
-
-  const page = firstData.boards[0]?.items_page;
-  return drainCursor(page?.items ?? [], page?.cursor ?? null, itemFields);
-}
-
-// ── Cached fetch — hierarchy: memory → Postgres DB → Monday.com API ──────────
-// Memory:   0 ms  (lost on restart)
-// Postgres: ~50ms (persists forever across restarts, cold starts, deployments)
-// Monday:   5-15s (only hit when cache is empty or force-refreshed)
-
-import { hasDb, getItemsCache, setItemsCache, ensureSchema } from "@/lib/db";
-
-async function fetchBoardCached(
-  boardId: string,
-  columnMapping: ColumnMapping,
-  allGroups: { id: string; title: string }[],
-  mode: ItemsMode,
-  force = false
-): Promise<BoardCache> {
-  const cacheKey = `${boardId}:${mode}`;
-
-  // 1. In-memory (fastest — same server process)
-  if (!force) {
-    const mem = boardItemCache.get(cacheKey);
-    if (mem && Date.now() - mem.fetchedAt < BOARD_ITEM_TTL) return mem;
-  }
-
-  // 2. Postgres DB (survives restarts)
-  if (!force && hasDb()) {
-    try {
-      await ensureSchema();
-      const db = await getItemsCache(boardId, mode);
-      if (db) {
-        const age = Date.now() - db.fetchedAt.getTime();
-        if (age < BOARD_ITEM_TTL) {
-          const cached: BoardCache = { items: db.items, columnMapping: db.columnMapping, fetchedAt: db.fetchedAt.getTime() };
-          boardItemCache.set(cacheKey, cached); // promote to memory
-          return cached;
-        }
-      }
-    } catch { /* DB unavailable — continue to Monday.com */ }
-  }
-
-  // 3. Deduplicate concurrent fetches (don't hit Monday twice simultaneously)
-  if (!force) {
-    const inflight = inflightFetches.get(cacheKey);
-    if (inflight) return inflight;
-  }
-
-  const promise = (async (): Promise<BoardCache> => {
-    try {
-      const items = mode === "intake"
-        ? await fetchIntakeItems(boardId, columnMapping, allGroups)
-        : await fetchTimelineItems(boardId, columnMapping);
-
-      const result: BoardCache = { items, columnMapping, fetchedAt: Date.now() };
-
-      // Save to memory
-      boardItemCache.set(cacheKey, result);
-
-      // Save to Postgres DB (fire-and-forget so we don't block the response)
-      if (hasDb()) {
-        setItemsCache(boardId, mode, items, columnMapping).catch(() => {});
-      }
-
-      return result;
-    } finally {
-      inflightFetches.delete(cacheKey);
-    }
-  })();
-
-  inflightFetches.set(cacheKey, promise);
-  return promise;
-}
-
-// ── Route handler ─────────────────────────────────────────────────────────────
-
-// Combined columns + groups query — one round trip
-const GET_COLS_AND_GROUPS = `
-  query GetColsAndGroups($boardId: ID!) {
-    boards(ids: [$boardId]) {
-      columns { id title type settings_str }
-      groups { id title }
-    }
-  }`;
+import {
+  getBoardMetadata, fetchBoardCached, buildWeekData,
+  BOARD_ITEM_TTL,
+} from "@/lib/items-server";
+import { normalizeMondayItem, buildProductSummary } from "@/lib/utils";
+import type { BoardType, ItemsMode } from "@/lib/types";
 
 export async function GET(req: NextRequest) {
-  const boardId = req.nextUrl.searchParams.get("boardId");
-  const boardType = req.nextUrl.searchParams.get("boardType") as BoardType;
+  const boardId     = req.nextUrl.searchParams.get("boardId");
+  const boardType   = req.nextUrl.searchParams.get("boardType") as BoardType;
   const groupsParam = req.nextUrl.searchParams.get("groups");
-  const weekOffset = parseInt(req.nextUrl.searchParams.get("weekOffset") ?? "0", 10);
-  const allWeeks = req.nextUrl.searchParams.get("allWeeks") === "1";
+  const weekOffset  = parseInt(req.nextUrl.searchParams.get("weekOffset") ?? "0", 10);
+  const allWeeks    = req.nextUrl.searchParams.get("allWeeks") === "1";
   const mode: ItemsMode = (req.nextUrl.searchParams.get("mode") as ItemsMode) ?? "timeline";
-  const force = req.nextUrl.searchParams.get("refresh") === "1";
+  const force       = req.nextUrl.searchParams.get("refresh") === "1";
 
   if (!boardId || !boardType) {
     return NextResponse.json({ error: "boardId and boardType are required" }, { status: 400 });
@@ -265,84 +23,40 @@ export async function GET(req: NextRequest) {
     ? groupsParam.split(",").filter(Boolean) : null;
 
   try {
-    // Step 1: Columns + groups metadata — single fast request
-    const meta = await mondayQuery<ColumnsAndGroupsResponse>(GET_COLS_AND_GROUPS, { boardId });
-    const columns = meta.boards[0]?.columns ?? [];
-    const allGroups = meta.boards[0]?.groups ?? [];
-    const columnMapping: ColumnMapping = detectColumnMapping(columns);
+    const { allGroups, columnMapping, knownProducts } = await getBoardMetadata(boardId);
 
-    // Parse known product names once
-    const productCol = columns.find((c) => c.id === columnMapping.product);
-    let knownProducts: string[] | undefined;
-    if (productCol?.settings_str) {
-      try {
-        const settings = JSON.parse(productCol.settings_str) as { labels?: Record<string, string> };
-        knownProducts = Object.values(settings.labels ?? {}).filter((v) => v && v !== "-");
-      } catch { /* ignore */ }
-    }
-
-    // Step 2: Fetch raw items ONCE (cached per board+mode)
     const [cacheEntry, intakeCacheEntry] = await Promise.all([
       fetchBoardCached(boardId, columnMapping, allGroups, "timeline", force),
-      fetchBoardCached(boardId, columnMapping, allGroups, "intake", force),
+      fetchBoardCached(boardId, columnMapping, allGroups, "intake",   force),
     ]);
 
-    const rawItems = cacheEntry.items;
     const age = Date.now() - cacheEntry.fetchedAt;
 
-    // Step 3: Optional group filter
-    const grouped = selectedGroupIds
-      ? rawItems.filter((i) => selectedGroupIds.includes(i.group.id))
-      : rawItems;
+    // Optional group filter (timeline items only)
+    const rawItems = selectedGroupIds
+      ? cacheEntry.items.filter((i) => selectedGroupIds.includes(i.group.id))
+      : cacheEntry.items;
 
-    // Step 4: Normalize once — reuse for all week views
-    const normalized = grouped
+    const normalized = rawItems
       .map((i) => normalizeMondayItem(i, boardType, columnMapping, false))
       .filter((i): i is NonNullable<typeof i> => i !== null);
 
-    // Intake normalized (for pipeline tasks)
     const intakeNormalized = intakeCacheEntry.items
       .map((i) => normalizeMondayItem(i, boardType, columnMapping, true))
       .filter((i): i is NonNullable<typeof i> => i !== null);
 
-    // ── Helper: build one week's response ────────────────────────────────────
-    const buildWeekData = (offset: number) => {
-      const weekWindow = getWeekWindow(offset);
-      let filtered = filterByWeekWindow(normalized, weekWindow);
-
-      if (offset === 1) {
-        const scheduledIds = new Set(filtered.map((i) => i.id));
-        const pipeline = getPipelineTasks(intakeNormalized, weekWindow, scheduledIds);
-        filtered = [...filtered, ...pipeline];
-      }
-
-      filtered.sort((a, b) => {
-        if (!a.timelineEnd && !b.timelineEnd) return 0;
-        if (!a.timelineEnd) return 1;
-        if (!b.timelineEnd) return -1;
-        return new Date(a.timelineEnd).getTime() - new Date(b.timelineEnd).getTime();
-      });
-
-      return {
-        items: filtered,
-        productSummary: buildProductSummary(filtered, knownProducts),
-        columnMapping,
-        total: filtered.length,
-      };
-    }
-
-    // ── allWeeks mode: return all 3 views in one shot ────────────────────────
+    // ── allWeeks mode ────────────────────────────────────────────────────────
     if (allWeeks && mode !== "intake") {
       return NextResponse.json({
-        lastWeek: buildWeekData(-1),
-        thisWeek: buildWeekData(0),
-        nextWeek: buildWeekData(1),
+        lastWeek: buildWeekData(normalized, intakeNormalized, columnMapping, knownProducts, -1),
+        thisWeek: buildWeekData(normalized, intakeNormalized, columnMapping, knownProducts,  0),
+        nextWeek: buildWeekData(normalized, intakeNormalized, columnMapping, knownProducts,  1),
         cached: age < BOARD_ITEM_TTL,
         cacheAgeSeconds: Math.round(age / 1000),
       });
     }
 
-    // ── Single-week / intake mode (backward-compatible) ──────────────────────
+    // ── Intake mode ──────────────────────────────────────────────────────────
     if (mode === "intake") {
       const filtered = intakeNormalized.sort((a, b) => a.name.localeCompare(b.name));
       return NextResponse.json({
@@ -355,7 +69,8 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    const weekData = buildWeekData(weekOffset);
+    // ── Single-week mode ─────────────────────────────────────────────────────
+    const weekData = buildWeekData(normalized, intakeNormalized, columnMapping, knownProducts, weekOffset);
     return NextResponse.json({
       ...weekData,
       cached: age < BOARD_ITEM_TTL,
@@ -367,4 +82,3 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Failed to fetch items", detail: String(err) }, { status: 500 });
   }
 }
-
