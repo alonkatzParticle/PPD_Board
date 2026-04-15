@@ -77,7 +77,7 @@ export function PlanningClient({
   }, [activeBoard, weekKey]);
 
   // ── Load all weeks ─────────────────────────────────────────────────────────
-  const loadAllWeeks = useCallback(async (forceRefresh = false, silent = false) => {
+  const loadAllWeeks = useCallback(async (forceRefresh = false, silent = false, bypassServerCache = forceRefresh) => {
     const boardId = BOARD_IDS[activeBoard];
     const cacheKey = `allweeks:${boardId}`;
 
@@ -95,7 +95,8 @@ export function PlanningClient({
       url.searchParams.set("boardType", activeBoard);
       url.searchParams.set("groups", "all");
       url.searchParams.set("allWeeks", "1");
-      if (forceRefresh) url.searchParams.set("refresh", "1");
+      if (bypassServerCache) url.searchParams.set("refresh", "1");
+      url.searchParams.set("_t", Date.now().toString());
       const res = await fetch(url.toString());
       if (!res.ok) throw new Error("Failed to load items");
       const data: AllWeeksData = await res.json();
@@ -145,7 +146,7 @@ export function PlanningClient({
     const interval = setInterval(() => {
       const hour = new Date().getHours();
       if (hour >= 8 && hour < 18) {
-        loadAllWeeks(true, true);
+        loadAllWeeks(true, true, false); // Bypass client cache, hit SWR Postgres cache
         loadPlannedTasks();
       }
     }, 60 * 1000);
@@ -214,6 +215,7 @@ export function PlanningClient({
   }, [activeBoard, weekKey]);
 
   // ── Derived data ────────────────────────────────────────────────────────────
+  const isInitialLoading = loadingItems && !allWeeksData;
   const nextWeekData = allWeeksData?.nextWeek ?? null;
 
   const productStatsMap = useMemo(() => {
@@ -308,7 +310,7 @@ export function PlanningClient({
 
         {/* ── Top row ─────────────────────────────────────────────────────── */}
         <div className="flex flex-wrap items-center gap-3 mb-6">
-          <BoardToggle active={activeBoard} onChange={handleBoardSwitch} loading={loadingItems} />
+          <BoardToggle active={activeBoard} onChange={handleBoardSwitch} loading={isInitialLoading} />
 
           <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-violet-600/10 border border-violet-500/20">
             <CalendarDays className="w-4 h-4 text-violet-400" />
@@ -324,7 +326,7 @@ export function PlanningClient({
             )}
             <button
               id="refresh-btn"
-              onClick={() => { loadAllWeeks(true); loadPlannedTasks(); }}
+              onClick={() => { loadAllWeeks(true, false, true); loadPlannedTasks(); }}
               disabled={loadingItems}
               className={cn(
                 "flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-all border border-transparent hover:border-zinc-700",

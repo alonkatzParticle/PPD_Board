@@ -78,7 +78,7 @@ export function TimelineClient({
   }, [loadGroups, activeBoard]);
 
   // Load all weeks
-  const loadAllWeeks = useCallback(async (forceRefresh = false, silent = false) => {
+  const loadAllWeeks = useCallback(async (forceRefresh = false, silent = false, bypassServerCache = forceRefresh) => {
     const boardId  = BOARD_IDS[activeBoard];
     const cacheKey = `allweeks:${boardId}`;
 
@@ -96,7 +96,8 @@ export function TimelineClient({
       url.searchParams.set("boardType", activeBoard);
       url.searchParams.set("groups", "all");
       url.searchParams.set("allWeeks", "1");
-      if (forceRefresh) url.searchParams.set("refresh", "1");
+      if (bypassServerCache) url.searchParams.set("refresh", "1");
+      url.searchParams.set("_t", Date.now().toString());
       const res = await fetch(url.toString());
       if (!res.ok) throw new Error("Failed to load items");
       const data: AllWeeksData = await res.json();
@@ -134,7 +135,7 @@ export function TimelineClient({
     refreshIntervalRef.current = setInterval(() => {
       const hour = new Date().getHours();
       if (hour >= 8 && hour < 18) {
-        loadAllWeeks(true, true);
+        loadAllWeeks(true, true, false); // Bypass client cache, hit SWR Postgres cache
       }
     }, 60 * 1000);
     return () => { if (refreshIntervalRef.current) clearInterval(refreshIntervalRef.current); };
@@ -163,6 +164,8 @@ export function TimelineClient({
   const overdueCount  = filteredItemsData?.items.filter((i: { isOverdue: boolean }) => i.isOverdue).length ?? 0;
   const dueSoonCount  = filteredItemsData?.items.filter((i: { isDueSoon: boolean; isOverdue: boolean }) => i.isDueSoon && !i.isOverdue).length ?? 0;
 
+  const isInitialLoading = loadingItems && !allWeeksData;
+
   return (
     <div className="min-h-screen hero-gradient">
       <main className="max-w-screen-2xl mx-auto px-6 py-8 space-y-6">
@@ -177,7 +180,7 @@ export function TimelineClient({
 
         {/* Row 1 */}
         <div className="flex flex-wrap items-center gap-4">
-          <BoardToggle active={activeBoard} onChange={handleBoardSwitch} loading={loadingItems} />
+          <BoardToggle active={activeBoard} onChange={handleBoardSwitch} loading={isInitialLoading} />
 
           <GroupFilter groups={groups} selectedIds={selectedGroups} onChange={setSelectedGroups} loading={loadingGroups} />
 
@@ -186,7 +189,7 @@ export function TimelineClient({
             {lastRefresh && !hasNewData && <span className="text-xs text-zinc-600 hidden sm:block">Updated {lastRefresh.toLocaleTimeString()}</span>}
             <button
               id="refresh-btn"
-              onClick={() => loadAllWeeks(true)}
+              onClick={() => loadAllWeeks(true, false, true)}
               disabled={loadingItems}
               className={cn(
                 "flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-all border border-transparent hover:border-zinc-700",
@@ -220,7 +223,7 @@ export function TimelineClient({
             ))}
           </div>
 
-          {!loadingItems && filteredItemsData && (
+          {!isInitialLoading && filteredItemsData && (
             <div className="flex items-center gap-2 ml-auto">
               {weekOffset !== 0 && overdueCount > 0 && (
                 <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-950/60 border border-red-800/50 text-red-300 text-xs font-medium">
@@ -242,14 +245,14 @@ export function TimelineClient({
         <ProductSummaryPanel
           summary={filteredItemsData?.productSummary ?? []}
           totalItems={filteredItemsData?.total ?? 0}
-          loading={loadingItems}
+          loading={isInitialLoading}
           allItems={filteredItemsData?.items ?? []}
           boardType={activeBoard}
           weekKey={toWeekKey(weekWindow.start)}
           weekOffset={weekOffset}
         />
 
-        <TaskTable items={filteredItemsData?.items ?? []} loading={loadingItems} hideOverdue={weekOffset === 0} />
+        <TaskTable items={filteredItemsData?.items ?? []} loading={isInitialLoading} hideOverdue={weekOffset === 0} />
       </main>
     </div>
   );

@@ -53,7 +53,7 @@ export function AssigningClient({
     fetchWeekGoals(activeBoard, weekKey).then(setGoals);
   }, [activeBoard, weekKey]);
 
-  const loadItems = useCallback(async (forceRefresh = false, silent = false) => {
+  const loadItems = useCallback(async (forceRefresh = false, silent = false, bypassServerCache = forceRefresh) => {
     const boardId  = BOARD_IDS[activeBoard];
     const cacheKey = `allweeks:${boardId}`;
 
@@ -71,7 +71,7 @@ export function AssigningClient({
       url.searchParams.set("boardType", activeBoard);
       url.searchParams.set("groups", "all");
       url.searchParams.set("allWeeks", "1");
-      if (forceRefresh) url.searchParams.set("refresh", "1");
+      if (bypassServerCache) url.searchParams.set("refresh", "1");
       const res = await fetch(url.toString());
       if (!res.ok) throw new Error("Failed to load items");
       const data: AllWeeksData = await res.json();
@@ -95,7 +95,7 @@ export function AssigningClient({
     const interval = setInterval(() => {
       const hour = new Date().getHours();
       if (hour >= 8 && hour < 18) {
-        loadItems(true, true);
+        loadItems(true, true, false); // Bypass client cache, silent, hit SWR Postgres Cache
       }
     }, 60 * 1000);
     return () => clearInterval(interval);
@@ -107,6 +107,8 @@ export function AssigningClient({
     setGoals({ totalTarget: null, products: {} });
     setModalState(null);
   };
+
+  const isInitialLoading = loadingItems && !allWeeksData;
 
   // Derived - main assignment list (filtered by marketing/media)
   const nextWeekItems  = allWeeksData?.nextWeek.items ?? [];
@@ -164,7 +166,7 @@ export function AssigningClient({
 
         {/* Top row */}
         <div className="flex flex-wrap items-center gap-4">
-          <BoardToggle active={activeBoard} onChange={handleBoardSwitch} loading={loadingItems} />
+          <BoardToggle active={activeBoard} onChange={handleBoardSwitch} loading={isInitialLoading} />
 
           <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-violet-600/10 border border-violet-500/20">
             <CalendarDays className="w-4 h-4 text-violet-400" />
@@ -180,7 +182,7 @@ export function AssigningClient({
             )}
             <button
               id="refresh-btn"
-              onClick={() => { loadItems(true); fetchWeekGoals(activeBoard, weekKey).then(setGoals); }}
+              onClick={() => { loadItems(true, false, true); fetchWeekGoals(activeBoard, weekKey).then(setGoals); }}
               disabled={loadingItems}
               className={cn(
                 "flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-all border border-transparent hover:border-zinc-700",
@@ -195,7 +197,7 @@ export function AssigningClient({
 
 
         {/* Assignee counts */}
-        {!loadingItems && (
+        {!isInitialLoading && (
           <div className="flex flex-wrap items-center gap-2">
             {assigneeCounts.map((a) => (
               <button
@@ -213,7 +215,7 @@ export function AssigningClient({
         )}
 
         {/* Assignment progress bar */}
-        {!loadingItems && (() => {
+        {!isInitialLoading && (() => {
           const withGoal = productData.filter(
             (p): p is typeof p & { goal: number } => p.goal !== null && p.goal > 0
           );
@@ -222,7 +224,7 @@ export function AssigningClient({
         })()}
 
         {/* Product grid */}
-        {loadingItems ? (
+        {isInitialLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
             {[...Array(8)].map((_, i) => (
               <div key={i} className="h-28 bg-zinc-900 rounded-xl border border-zinc-800 animate-pulse" />
