@@ -288,6 +288,58 @@ export function buildWeekData(
   };
 }
 
+// ── Groups ────────────────────────────────────────────────────────────────────
+
+interface GroupsResponse {
+  boards: { groups: { id: string; title: string; color?: string }[] }[];
+}
+
+export async function getBoardGroups(
+  boardId: string
+): Promise<{ id: string; title: string; color?: string }[]> {
+  const data = await mondayQuery<GroupsResponse>(`
+    query { boards(ids: [${boardId}]) { groups { id title color } } }
+  `);
+  return data.boards[0]?.groups ?? [];
+}
+
+// ── Intake ────────────────────────────────────────────────────────────────────
+
+export interface IntakeData {
+  items: DashboardItem[];
+  productSummary: ProductSummary[];
+  columnMapping: ColumnMapping;
+  total: number;
+  cached: boolean;
+  cacheAgeSeconds: number;
+}
+
+export async function getIntakeData(
+  boardId: string,
+  boardType: BoardType,
+  force = false
+): Promise<IntakeData> {
+  const { allGroups, columnMapping, knownProducts } = await getBoardMetadata(boardId);
+  const entry = await fetchBoardCached(boardId, columnMapping, allGroups, "intake", force);
+  const age   = Date.now() - entry.fetchedAt;
+
+  const items = entry.items
+    .map((i) => normalizeMondayItem(i, boardType, columnMapping, true))
+    .filter((i): i is NonNullable<typeof i> => i !== null)
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  return {
+    items,
+    productSummary: buildProductSummary(items, knownProducts),
+    columnMapping,
+    total:           items.length,
+    cached:          age < BOARD_ITEM_TTL,
+    cacheAgeSeconds: Math.round(age / 1000),
+  };
+}
+
+// ── All weeks ─────────────────────────────────────────────────────────────────
+
 export async function getAllWeeksData(
   boardId: string,
   boardType: BoardType,

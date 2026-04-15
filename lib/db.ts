@@ -201,3 +201,24 @@ export async function deletePlannedTask(id: string): Promise<void> {
   const sql = getDb();
   await sql`DELETE FROM planned_tasks WHERE id = ${id}`;
 }
+
+// ── Goals ─────────────────────────────────────────────────────────────────────
+
+export async function getWeekGoalsFromDb(
+  boardType: string,
+  weekKey: string
+): Promise<{ totalTarget: number | null; products: Record<string, number> }> {
+  if (!hasDb()) return { totalTarget: null, products: {} };
+  try {
+    await ensureSchema();
+    const sql = getDb();
+    const rows = await sql`
+      SELECT goals FROM week_goals
+      WHERE board_type = ${boardType} AND week_key = ${weekKey}
+      LIMIT 1
+    ` as { goals: { totalTarget: number | null; products: Record<string, number> } }[];
+    return rows[0]?.goals ?? { totalTarget: null, products: {} };
+  } catch {
+    return { totalTarget: null, products: {} };
+  }
+}
