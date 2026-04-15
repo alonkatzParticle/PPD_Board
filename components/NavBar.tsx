@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Layers, ListOrdered, CalendarRange, ClipboardList } from "lucide-react";
+import { Layers, ListOrdered, CalendarRange, ClipboardList, UserCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
-  { href: "/",         label: "Queue",     icon: ListOrdered,    exact: true },
-  { href: "/timeline", label: "This Week", icon: CalendarRange,  exact: false },
-  { href: "/planning", label: "Planning",  icon: ClipboardList,  exact: false },
+  { href: "/",          label: "Queue",      icon: ListOrdered,   exact: true },
+  { href: "/timeline",  label: "This Week",  icon: CalendarRange, exact: false },
+  { href: "/planning",  label: "Planning",   icon: ClipboardList, exact: false },
+  { href: "/assigning", label: "Assigning",  icon: UserCheck,     exact: false },
 ];
 
 export function NavBar() {
