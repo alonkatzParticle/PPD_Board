@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { RefreshCw, AlertTriangle, UserCheck, CalendarDays, BarChart3, X } from "lucide-react";
 import type { BoardType, DashboardItem } from "@/lib/types";
 import { BOARD_IDS } from "@/lib/types";
-import { getWeekWindow, cn, formatDate } from "@/lib/utils";
+import { getWeekWindow, cn, formatDate, formatTaskName } from "@/lib/utils";
 import { toWeekKey, fetchWeekGoals, type WeekGoals } from "@/lib/targets";
 import { getCached, setCached, bustCacheByPrefix } from "@/lib/clientCache";
 import { BoardToggle } from "@/components/BoardToggle";
@@ -261,7 +261,7 @@ export function AssigningClient({
                   ) : (
                     modalItems.map((item) => (
                       <div key={item.id} className="flex items-center gap-4 px-6 py-3.5 hover:bg-zinc-800/40 transition-colors">
-                        <p className="flex-1 text-sm text-zinc-200 truncate" title={item.name}>{item.name}</p>
+                        <p className="flex-1 text-sm text-zinc-200 truncate" title={item.name}>{formatTaskName(item.name)}</p>
                         <div className="w-36 flex-shrink-0"><StatusBadge label={item.status} color={item.statusColor} /></div>
                         <span className="hidden sm:block w-[130px] flex-shrink-0 text-xs text-zinc-500 truncate">{item.groupTitle}</span>
                         <span className={cn(

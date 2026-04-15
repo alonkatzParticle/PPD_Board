@@ -7,7 +7,7 @@ import {
 import type { DashboardItem, PlannedTask } from "@/lib/types";
 import { TEAM_MEMBERS } from "@/lib/team";
 import { StatusBadge } from "@/components/StatusBadge";
-import { formatDate, cn } from "@/lib/utils";
+import { formatDate, formatTaskName, cn } from "@/lib/utils";
 
 // Base URL of the external Task Creator site
 const TASK_CREATOR_BASE = "https://form-nine-sooty.vercel.app/";
@@ -212,7 +212,7 @@ function MondayTaskRow({ item }: { item: DashboardItem }) {
       )}
     >
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-zinc-200 truncate" title={item.name}>{item.name}</p>
+        <p className="text-sm text-zinc-200 truncate" title={item.name}>{formatTaskName(item.name)}</p>
 
       </div>
       <div className="flex-shrink-0">

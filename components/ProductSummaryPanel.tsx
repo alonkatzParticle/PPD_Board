@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Package, ShoppingBag, ChevronDown, ChevronUp, X, Pencil, Check, Target } from "lucide-react";
 import type { ProductSummary, DashboardItem, BoardType } from "@/lib/types";
 import { StatusBadge } from "./StatusBadge";
-import { formatDate, cn, buildProductSummary } from "@/lib/utils";
+import { formatDate, formatTaskName, cn, buildProductSummary } from "@/lib/utils";
 import {
   getWeekGoals, fetchWeekGoals, setTotalTarget, setProductTarget,
   type WeekGoals,
@@ -264,7 +264,7 @@ export function ProductSummaryPanel({
                       item.isDueSoon && !item.isOverdue && "border-l-2 border-amber-500"
                     )}
                   >
-                    <p className="flex-1 text-sm text-zinc-200 truncate" title={item.name}>{item.name}</p>
+                    <p className="flex-1 text-sm text-zinc-200 truncate" title={item.name}>{formatTaskName(item.name)}</p>
                     <div className="w-36 flex-shrink-0"><StatusBadge label={item.status} color={item.statusColor} /></div>
                     <span className="hidden sm:block w-[130px] flex-shrink-0 text-xs text-zinc-500 truncate">{item.groupTitle}</span>
                     <span className={cn("w-20 flex-shrink-0 text-xs font-medium text-right",

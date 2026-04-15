@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ChevronUp, ChevronDown, AlertCircle, Clock, Calendar } from "lucide-react";
 import type { DashboardItem } from "@/lib/types";
 import { StatusBadge } from "./StatusBadge";
-import { formatDate, cn } from "@/lib/utils";
+import { formatDate, formatTaskName, cn } from "@/lib/utils";
 
 type SortKey = "timelineEnd" | "product" | "name" | "status" | "groupTitle";
 type SortDir = "asc" | "desc";
@@ -136,7 +136,7 @@ export function TaskTable({ items, loading, hideOverdue = false }: TaskTableProp
                 )}
                 title={item.name}
               >
-                {item.name}
+                {formatTaskName(item.name)}
               </span>
             </div>
 

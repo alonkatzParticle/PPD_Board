@@ -93,6 +93,12 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/** Extract the display label from a Monday task name — everything after the last "|" */
+export function formatTaskName(name: string): string {
+  const idx = name.lastIndexOf("|");
+  return idx === -1 ? name : name.slice(idx + 1).trim();
+}
+
 export function formatDate(dateStr: string | null): string {
   if (!dateStr) return "—";
   try {
