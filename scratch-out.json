@@ -1,0 +1,1342 @@
+{
+  "data": {
+    "boards": [
+      {
+        "columns": [
+          {
+            "id": "name",
+            "title": "Name",
+            "type": "name"
+          },
+          {
+            "id": "timeline3__1",
+            "title": "Timeline",
+            "type": "timeline"
+          },
+          {
+            "id": "boolean_mm20pwgn",
+            "title": "Tracking",
+            "type": "checkbox"
+          },
+          {
+            "id": "date_Mjj2cG7T",
+            "title": "Deadline",
+            "type": "date"
+          },
+          {
+            "id": "priority_mkm11w0a",
+            "title": "Priority",
+            "type": "status"
+          },
+          {
+            "id": "status",
+            "title": "Status",
+            "type": "status"
+          },
+          {
+            "id": "label4",
+            "title": "Type",
+            "type": "status"
+          },
+          {
+            "id": "label",
+            "title": "Department",
+            "type": "status"
+          },
+          {
+            "id": "pulse_updated_mktsr0pq",
+            "title": "Last updated",
+            "type": "last_updated"
+          },
+          {
+            "id": "label9",
+            "title": "Product",
+            "type": "status"
+          },
+          {
+            "id": "person",
+            "title": "Requested By",
+            "type": "people"
+          },
+          {
+            "id": "people",
+            "title": "Editor",
+            "type": "people"
+          },
+          {
+            "id": "numbers",
+            "title": "Versions",
+            "type": "numbers"
+          },
+          {
+            "id": "link",
+            "title": "Frame",
+            "type": "link"
+          },
+          {
+            "id": "link4__1",
+            "title": "DropBox (For Uploading Finished Project)",
+            "type": "link"
+          },
+          {
+            "id": "link1__1",
+            "title": "Project Link",
+            "type": "link"
+          },
+          {
+            "id": "color_mkt4dcn4",
+            "title": "Uploaded On Meta",
+            "type": "status"
+          },
+          {
+            "id": "color_mkyggphw",
+            "title": "Uploaded On AppLovin",
+            "type": "status"
+          },
+          {
+            "id": "color_mkygz443",
+            "title": "Uploaded On Google",
+            "type": "status"
+          },
+          {
+            "id": "long_text_mkn8c1ax",
+            "title": "Video Concept",
+            "type": "long_text"
+          },
+          {
+            "id": "subitems",
+            "title": "Subitems",
+            "type": "subtasks"
+          },
+          {
+            "id": "long_text_Mjj2uK4g",
+            "title": "Script/Message",
+            "type": "long_text"
+          },
+          {
+            "id": "short_text_mkn8n4bx",
+            "title": "Hook",
+            "type": "text"
+          },
+          {
+            "id": "multi_select_Mjj2VFZH",
+            "title": "Sizes Needed",
+            "type": "dropdown"
+          },
+          {
+            "id": "files",
+            "title": "Relevant Files",
+            "type": "file"
+          },
+          {
+            "id": "time_tracking__1",
+            "title": "Time tracking",
+            "type": "time_tracking"
+          },
+          {
+            "id": "date_mkvsvjrm",
+            "title": "Created On",
+            "type": "date"
+          },
+          {
+            "id": "duration_mkynps36",
+            "title": "Working Time",
+            "type": "time_tracking"
+          },
+          {
+            "id": "duration_mkynnrsn",
+            "title": "Reviewing Time",
+            "type": "time_tracking"
+          },
+          {
+            "id": "duration_mkynptaf",
+            "title": "From Request to Completion",
+            "type": "time_tracking"
+          },
+          {
+            "id": "duration_mkynnxec",
+            "title": "Time to Upload",
+            "type": "time_tracking"
+          },
+          {
+            "id": "duration_mkynmfnr",
+            "title": "Time in Stuck",
+            "type": "time_tracking"
+          },
+          {
+            "id": "date_mkynphw8",
+            "title": "Timer Control",
+            "type": "date"
+          },
+          {
+            "id": "numeric_mkypwm8y",
+            "title": "Day Counter",
+            "type": "numbers"
+          },
+          {
+            "id": "single_selectu06tevn",
+            "title": "Platform",
+            "type": "status"
+          },
+          {
+            "id": "text_mm1fn440",
+            "title": "Ad Name",
+            "type": "text"
+          },
+          {
+            "id": "color_mm1q4zbz",
+            "title": "AI Assist",
+            "type": "status"
+          },
+          {
+            "id": "numeric_mm209bwg",
+            "title": "Estimated Video Duration",
+            "type": "numbers"
+          }
+        ],
+        "items_page": {
+          "items": [
+            {
+              "name": "Face Cream | META | ADGE | You Look Different (Hook v2)",
+              "column_values": [
+                {
+                  "id": "timeline3__1",
+                  "type": "timeline",
+                  "value": "{\"to\":\"2026-04-02\",\"from\":\"2026-03-29\",\"changed_at\":\"2026-03-30T12:16:29.578Z\"}",
+                  "text": "2026-03-29 - 2026-04-02"
+                },
+                {
+                  "id": "boolean_mm20pwgn",
+                  "type": "checkbox",
+                  "value": "{\"checked\":false}",
+                  "text": ""
+                },
+                {
+                  "id": "date_Mjj2cG7T",
+                  "type": "date",
+                  "value": null,
+                  "text": ""
+                },
+                {
+                  "id": "priority_mkm11w0a",
+                  "type": "status",
+                  "value": "{\"index\":109,\"post_id\":null,\"changed_at\":\"2026-02-03T10:59:17.545Z\"}",
+                  "text": "Medium"
+                },
+                {
+                  "id": "status",
+                  "type": "status",
+                  "value": "{\"index\":10,\"post_id\":null,\"changed_at\":\"2026-02-23T15:00:00.463Z\"}",
+                  "text": "Stuck"
+                },
+                {
+                  "id": "label4",
+                  "type": "status",
+                  "value": "{\"index\":0,\"post_id\":null,\"changed_at\":\"2026-02-03T10:59:17.545Z\"}",
+                  "text": "Iterations/Cuts/Edits"
+                },
+                {
+                  "id": "label",
+                  "type": "status",
+                  "value": "{\"index\":105,\"post_id\":null,\"changed_at\":\"2026-02-03T10:59:17.534Z\"}",
+                  "text": "Marketing/Media"
+                },
+                {
+                  "id": "pulse_updated_mktsr0pq",
+                  "type": "last_updated",
+                  "value": "{\"updated_at\":\"2026-04-15T04:01:27Z\",\"updater_id\":\"79740967\"}",
+                  "text": "2026-04-15 04:01:27 UTC"
+                },
+                {
+                  "id": "label9",
+                  "type": "status",
+                  "value": "{\"index\":105,\"post_id\":null,\"changed_at\":\"2026-02-03T10:59:17.532Z\"}",
+                  "text": "Face Cream"
+                },
+                {
+                  "id": "person",
+                  "type": "people",
+                  "value": "{\"changed_at\":\"2026-02-03T10:59:17.534Z\",\"personsAndTeams\":[{\"id\":41215707,\"kind\":\"person\"},{\"id\":40905843,\"kind\":\"person\"},{\"id\":94852717,\"kind\":\"person\"}]}",
+                  "text": "Anton Shpakovskiy, Aviad Eilam, Tom Tabaritzi"
+                },
+                {
+                  "id": "people",
+                  "type": "people",
+                  "value": "{\"changed_at\":\"2026-02-09T08:23:57.296Z\",\"personsAndTeams\":[{\"id\":51316881,\"kind\":\"person\"}]}",
+                  "text": "Isaac Yashar"
+                },
+                {
+                  "id": "numbers",
+                  "type": "numbers",
+                  "value": "\"2\"",
+                  "text": "2"
+                },
+                {
+                  "id": "link",
+                  "type": "link",
+                  "value": null,
+                  "text": ""
+                },
+                {
+                  "id": "link4__1",
+                  "type": "link",
+                  "value": "{\"url\":\"https://www.dropbox.com/scl/fo/h1bs5bandrbu08npper52/ABIVeZvNnR4bvde8M3V5pfw?rlkey=tlih4gd1pk0vw9ucvinfwxuc6&dl=0\",\"text\":\"Dropbox Link\",\"changed_at\":\"2026-03-29T11:45:18.912Z\"}",
+                  "text": "Dropbox Link - https://www.dropbox.com/scl/fo/h1bs5bandrbu08npper52/ABIVeZvNnR4bvde8M3V5pfw?rlkey=tlih4gd1pk0vw9ucvinfwxuc6&dl=0"
+                },
+                {
+                  "id": "link1__1",
+                  "type": "link",
+                  "value": null,
+                  "text": ""
+                },
+                {
+                  "id": "color_mkt4dcn4",
+                  "type": "status",
+                  "value": null,
+                  "text": "Not Uploaded"
+                },
+                {
+                  "id": "color_mkyggphw",
+                  "type": "status",
+                  "value": null,
+                  "text": null
+                },
+                {
+                  "id": "color_mkygz443",
+                  "type": "status",
+                  "value": null,
+                  "text": null
+                },
+                {
+                  "id": "long_text_mkn8c1ax",
+                  "type": "long_text",
+                  "value": "{\"text\":\"Using the original video - https://particle-for-men.monday.com/boards/5433027071/pulses/10665022766\\n\\nProvide new hooks, based ob ADGE suggestions.\",\"changed_at\":\"2026-02-03T10:59:17.545Z\"}",
+                  "text": "Using the original video - https://particle-for-men.monday.com/boards/5433027071/pulses/10665022766\n\nProvide new hooks, based ob ADGE suggestions."
+                },
+                {
+                  "id": "subitems",
+                  "type": "subtasks",
+                  "value": null,
+                  "text": null
+                },
+                {
+                  "id": "long_text_Mjj2uK4g",
+                  "type": "long_text",
+                  "value": "{\"text\":\"HOOK 1:\\nWoman: \\\"You actually look... years younger. What's your secret? Did you finally start sleeping?\\\"\\nMan: \\\"Not quite.\\\"\\nWoman: \\\"Is it your makeup? Did you do something to your hair?\\\"\\n\\nHOOK 2: \\nWoman: \\\"Okay, I give up. What did you do to make your skin look so... *smooth*? No new haircut, no new job, so what is it?\\\"\\nMan: \\\"Not quite.\\\"\\nWoman: \\\"Is it your makeup?\\\"\",\"changed_at\":\"2026-02-03T10:59:17.545Z\"}",
+                  "text": "HOOK 1:\nWoman: \"You actually look... years younger. What's your secret? Did you finally start sleeping?\"\nMan: \"Not quite.\"\nWoman: \"Is it your makeup? Did you do something to your hair?\"\n\nHOOK 2: \nWoman: \"Okay, I give up. What did you do to make your skin look so... *smooth*? No new haircut, no new job, so what is it?\"\nMan: \"Not quite.\"\nWoman: \"Is it your makeup?\""
+                },
+                {
+                  "id": "short_text_mkn8n4bx",
+                  "type": "text",
+                  "value": null,
+                  "text": ""
+                },
+                {
+                  "id": "multi_select_Mjj2VFZH",
+                  "type": "dropdown",
+                  "value": "{\"ids\":[0,2],\"changed_at\":\"2026-02-03T10:59:17.545Z\"}",
+                  "text": "4x5, 9x16"
+                },
+                {
+                  "id": "files",
+                  "type": "file",
+                  "value": null,
+                  "text": ""
+                },
+                {
+                  "id": "time_tracking__1",
+                  "type": "time_tracking",
+                  "value": "{\"running\":\"true\",\"duration\":4390308,\"startDate\":1771855860,\"changed_at\":\"2026-02-23T14:11:00.985Z\"}",
+                  "text": "1219:31:48"
+                },
+                {
+                  "id": "date_mkvsvjrm",
+                  "type": "date",
+                  "value": "{\"date\":\"2026-02-03\",\"changed_at\":\"2026-02-03T10:59:20.383Z\"}",
+                  "text": "2026-02-03"
+                },
+                {
+                  "id": "duration_mkynps36",
+                  "type": "time_tracking",
+                  "value": "{\"running\":\"false\",\"duration\":2945,\"startDate\":1771855861,\"changed_at\":\"2026-02-23T15:00:07.295Z\"}",
+                  "text": "00:49:05"
+                },
+                {
+                  "id": "duration_mkynnrsn",
+                  "type": "time_tracking",
+                  "value": "{\"running\":\"false\",\"duration\":0,\"startDate\":null}",
+                  "text": ""
+                },
+                {
+                  "id": "duration_mkynptaf",
+                  "type": "time_tracking",
+                  "value": "{\"running\":\"false\",\"duration\":589639,\"startDate\":1771830079,\"changed_at\":\"2026-02-23T15:00:05.634Z\"}",
+                  "text": "163:47:19"
+                },
+                {
+                  "id": "duration_mkynnxec",
+                  "type": "time_tracking",
+                  "value": "{\"running\":\"false\",\"duration\":0,\"startDate\":null}",
+                  "text": ""
+                },
+                {
+                  "id": "duration_mkynmfnr",
+                  "type": "time_tracking",
+                  "value": "{\"running\":\"false\",\"duration\":7246,\"startDate\":1771858811,\"changed_at\":\"2026-02-23T17:00:57.954Z\"}",
+                  "text": "02:00:46"
+                },
+                {
+                  "id": "date_mkynphw8",
+                  "type": "date",
+                  "value": "{\"date\":\"2026-04-15\",\"time\":null,\"changed_at\":\"2026-04-14T17:00:55.142Z\"}",
+                  "text": "2026-04-15"
+                },
+                {
+                  "id": "numeric_mkypwm8y",
+                  "type": "numbers",
+                  "value": "\"4\"",
+                  "text": "4"
+                },
+                {
+                  "id": "single_selectu06tevn",
+                  "type": "status",
+                  "value": null,
+                  "text": ""
+                },
+                {
+                  "id": "text_mm1fn440",
+                  "type": "text",
+                  "value": null,
+                  "text": ""
+                },
+                {
+                  "id": "color_mm1q4zbz",
+                  "type": "status",
+                  "value": null,
+                  "text": null
+                },
+                {
+                  "id": "numeric_mm209bwg",
+                  "type": "numbers",
+                  "value": null,
+                  "text": ""
+                }
+              ]
+            },
+            {
+              "name": "Face Cream | TV | FC Most Men 2026- Chorus- Packaging & Exporting for delivery",
+              "column_values": [
+                {
+                  "id": "timeline3__1",
+                  "type": "timeline",
+                  "value": "{\"to\":\"2026-04-12\",\"from\":\"2026-04-12\",\"changed_at\":\"2026-04-13T07:46:52.190Z\"}",
+                  "text": "2026-04-12 - 2026-04-12"
+                },
+                {
+                  "id": "boolean_mm20pwgn",
+                  "type": "checkbox",
+                  "value": "{\"checked\":false}",
+                  "text": ""
+                },
+                {
+                  "id": "date_Mjj2cG7T",
+                  "type": "date",
+                  "value": "{\"date\":\"2026-04-01\",\"changed_at\":\"2026-03-31T14:17:38.417Z\"}",
+                  "text": "2026-04-01"
+                },
+                {
+                  "id": "priority_mkm11w0a",
+                  "type": "status",
+                  "value": "{\"index\":110,\"post_id\":null,\"changed_at\":\"2026-03-31T14:17:38.417Z\"}",
+                  "text": "High"
+                },
+                {
+                  "id": "status",
+                  "type": "status",
+                  "value": "{\"index\":10,\"changed_at\":\"2026-04-13T13:13:14.566Z\"}",
+                  "text": "Stuck"
+                },
+                {
+                  "id": "label4",
+                  "type": "status",
+                  "value": "{\"index\":101,\"post_id\":null,\"changed_at\":\"2026-03-31T14:17:38.404Z\"}",
+                  "text": "TV"
+                },
+                {
+                  "id": "label",
+                  "type": "status",
+                  "value": "{\"index\":8,\"post_id\":null,\"changed_at\":\"2026-03-31T14:17:38.404Z\"}",
+                  "text": "TV"
+                },
+                {
+                  "id": "pulse_updated_mktsr0pq",
+                  "type": "last_updated",
+                  "value": "{\"updated_at\":\"2026-04-14T17:00:51Z\",\"updater_id\":\"79740967\"}",
+                  "text": "2026-04-14 17:00:51 UTC"
+                },
+                {
+                  "id": "label9",
+                  "type": "status",
+                  "value": "{\"index\":105,\"post_id\":null,\"changed_at\":\"2026-03-31T14:17:38.404Z\"}",
+                  "text": "Face Cream"
+                },
+                {
+                  "id": "person",
+                  "type": "people",
+                  "value": "{\"changed_at\":\"2026-03-31T14:17:38.404Z\",\"personsAndTeams\":[{\"id\":69149907,\"kind\":\"person\"},{\"id\":60980766,\"kind\":\"person\"}]}",
+                  "text": "Omer Barak, Tomer Wilf Lezmy"
+                },
+                {
+                  "id": "people",
+                  "type": "people",
+                  "value": "{\"changed_at\":\"2026-03-31T14:17:38.411Z\",\"personsAndTeams\":[{\"id\":51316881,\"kind\":\"person\"}]}",
+                  "text": "Isaac Yashar"
+                },
+                {
+                  "id": "numbers",
+                  "type": "numbers",
+                  "value": "\"1\"",
+                  "text": "1"
+                },
+                {
+                  "id": "link",
+                  "type": "link",
+                  "value": null,
+                  "text": ""
+                },
+                {
+                  "id": "link4__1",
+                  "type": "link",
+                  "value": "{\"url\":\"https://www.dropbox.com/scl/fo/wv6cposzhklh2aqg4lans/AHIG3yYraDjYE8M4ZS-H5To?rlkey=dr7hsx1y0539eca7cz13at6cy&st=lewhyitr&dl=0\",\"text\":\"https://www.dropbox.com/scl/fo/wv6cposzhklh2aqg4lans/AHIG3yYraDjYE8M4ZS-H5To?rlkey=dr7hsx1y0539eca7cz13at6cy&st=lewhyitr&dl=0\",\"changed_at\":\"2026-03-31T14:17:38.417Z\"}",
+                  "text": "https://www.dropbox.com/scl/fo/wv6cposzhklh2aqg4lans/AHIG3yYraDjYE8M4ZS-H5To?rlkey=dr7hsx1y0539eca7cz13at6cy&st=lewhyitr&dl=0"
+                },
+                {
+                  "id": "link1__1",
+                  "type": "link",
+                  "value": null,
+                  "text": ""
+                },
+                {
+                  "id": "color_mkt4dcn4",
+                  "type": "status",
+                  "value": null,
+                  "text": "Not Uploaded"
+                },
+                {
+                  "id": "color_mkyggphw",
+                  "type": "status",
+                  "value": null,
+                  "text": null
+                },
+                {
+                  "id": "color_mkygz443",
+                  "type": "status",
+                  "value": null,
+                  "text": null
+                },
+                {
+                  "id": "long_text_mkn8c1ax",
+                  "type": "long_text",
+                  "value": "{\"text\":\"Please prepare the Chorus 60-second commercial for final delivery.\\n\\nHere's the online file from Bensangi after color & retouch:\\n\\nhttps://www.dropbox.com/scl/fi/3gpy8qnux8by5lsho0hfm/Chorus-Color_V02-Amit-Bensangi.mov?rlkey=ig3hui6486wz2wvekatjs2zny&st=jj3kiwj0&dl=0\\n\\n1. Add bottom bar\\n2. Add Particle symbol on top right\\n3. Apply the final sound design mix file-\\nhttps://www.dropbox.com/scl/fi/90k50u3v3sjcymlvuej7b/Particle-Chorus-MIX.wav?rlkey=dlqzzcbm8485nnpxw40a7weug&st=mx7f4l46&dl=0\\n\\nPlease change the 1 million men to the version with - \\\" Whov'e\\\"\\n\\nOpen the premier project on 29.97 FPS and upload the HQ MOV file to the Dropbox folder attached to this ticket.\",\"changed_at\":\"2026-03-31T14:17:38.416Z\"}",
+                  "text": "Please prepare the Chorus 60-second commercial for final delivery.\n\nHere's the online file from Bensangi after color & retouch:\n\nhttps://www.dropbox.com/scl/fi/3gpy8qnux8by5lsho0hfm/Chorus-Color_V02-Amit-Bensangi.mov?rlkey=ig3hui6486wz2wvekatjs2zny&st=jj3kiwj0&dl=0\n\n1. Add bottom bar\n2. Add Particle symbol on top right\n3. Apply the final sound design mix file-\nhttps://www.dropbox.com/scl/fi/90k50u3v3sjcymlvuej7b/Particle-Chorus-MIX.wav?rlkey=dlqzzcbm8485nnpxw40a7weug&st=mx7f4l46&dl=0\n\nPlease change the 1 million men to the version with - \" Whov'e\"\n\nOpen the premier project on 29.97 FPS and upload the HQ MOV file to the Dropbox folder attached to this ticket."
+                },
+                {
+                  "id": "subitems",
+                  "type": "subtasks",
+                  "value": null,
+                  "text": null
+                },
+                {
+                  "id": "long_text_Mjj2uK4g",
+                  "type": "long_text",
+                  "value": "{\"text\":\"None\",\"changed_at\":\"2026-03-31T14:17:38.417Z\"}",
+                  "text": "None"
+                },
+                {
+                  "id": "short_text_mkn8n4bx",
+                  "type": "text",
+                  "value": "\"None\"",
+                  "text": "None"
+                },
+                {
+                  "id": "multi_select_Mjj2VFZH",
+                  "type": "dropdown",
+                  "value": "{\"ids\":[1],\"changed_at\":\"2026-03-31T14:17:38.417Z\"}",
+                  "text": "16x9"
+                },
+                {
+                  "id": "files",
+                  "type": "file",
+                  "value": null,
+                  "text": ""
+                },
+                {
+                  "id": "time_tracking__1",
+                  "type": "time_tracking",
+                  "value": "{\"duration\":0}",
+                  "text": ""
+                },
+                {
+                  "id": "date_mkvsvjrm",
+                  "type": "date",
+                  "value": "{\"date\":\"2026-03-31\",\"changed_at\":\"2026-03-31T14:17:41.174Z\"}",
+                  "text": "2026-03-31"
+                },
+                {
+                  "id": "duration_mkynps36",
+                  "type": "time_tracking",
+                  "value": "{\"running\":\"false\",\"duration\":0,\"startDate\":null}",
+                  "text": ""
+                },
+                {
+                  "id": "duration_mkynnrsn",
+                  "type": "time_tracking",
+                  "value": "{\"running\":\"false\",\"duration\":0,\"startDate\":null}",
+                  "text": ""
+                },
+                {
+                  "id": "duration_mkynptaf",
+                  "type": "time_tracking",
+                  "value": "{\"running\":\"false\",\"duration\":463676,\"startDate\":1776060133,\"changed_at\":\"2026-04-13T13:13:19.959Z\"}",
+                  "text": "128:47:56"
+                },
+                {
+                  "id": "duration_mkynnxec",
+                  "type": "time_tracking",
+                  "value": "{\"running\":\"false\",\"duration\":0,\"startDate\":null}",
+                  "text": ""
+                },
+                {
+                  "id": "duration_mkynmfnr",
+                  "type": "time_tracking",
+                  "value": "{\"running\":\"false\",\"duration\":10025,\"startDate\":1776086004,\"changed_at\":\"2026-04-13T16:00:30.212Z\"}",
+                  "text": "02:47:05"
+                },
+                {
+                  "id": "date_mkynphw8",
+                  "type": "date",
+                  "value": "{\"date\":\"2026-04-15\",\"time\":null,\"changed_at\":\"2026-04-14T17:00:51.361Z\"}",
+                  "text": "2026-04-15"
+                },
+                {
+                  "id": "numeric_mkypwm8y",
+                  "type": "numbers",
+                  "value": "\"0\"",
+                  "text": "0"
+                },
+                {
+                  "id": "single_selectu06tevn",
+                  "type": "status",
+                  "value": null,
+                  "text": ""
+                },
+                {
+                  "id": "text_mm1fn440",
+                  "type": "text",
+                  "value": null,
+                  "text": ""
+                },
+                {
+                  "id": "color_mm1q4zbz",
+                  "type": "status",
+                  "value": null,
+                  "text": null
+                },
+                {
+                  "id": "numeric_mm209bwg",
+                  "type": "numbers",
+                  "value": null,
+                  "text": ""
+                }
+              ]
+            },
+            {
+              "name": "Anti-Gray Serum | META | MOTION | Science of Gray",
+              "column_values": [
+                {
+                  "id": "timeline3__1",
+                  "type": "timeline",
+                  "value": "{\"to\":\"2026-04-23\",\"from\":\"2026-04-19\",\"changed_at\":\"2026-04-13T07:46:22.419Z\"}",
+                  "text": "2026-04-19 - 2026-04-23"
+                },
+                {
+                  "id": "boolean_mm20pwgn",
+                  "type": "checkbox",
+                  "value": "{\"checked\":false}",
+                  "text": ""
+                },
+                {
+                  "id": "date_Mjj2cG7T",
+                  "type": "date",
+                  "value": "{\"date\":\"2025-09-17\",\"changed_at\":\"2025-09-14T11:36:26.097Z\"}",
+                  "text": "2025-09-17"
+                },
+                {
+                  "id": "priority_mkm11w0a",
+                  "type": "status",
+                  "value": "{\"index\":109,\"post_id\":null,\"changed_at\":\"2025-05-27T11:34:58.706Z\"}",
+                  "text": "Medium"
+                },
+                {
+                  "id": "status",
+                  "type": "status",
+                  "value": "{\"index\":12,\"post_id\":null,\"changed_at\":\"2026-04-14T09:45:05.041Z\"}",
+                  "text": "Ready for Assignment"
+                },
+                {
+                  "id": "label4",
+                  "type": "status",
+                  "value": "{\"index\":156,\"post_id\":null,\"changed_at\":\"2025-05-27T11:34:58.699Z\"}",
+                  "text": "Script (<1 min)"
+                },
+                {
+                  "id": "label",
+                  "type": "status",
+                  "value": "{\"index\":105,\"post_id\":null,\"changed_at\":\"2026-02-22T14:43:38.940Z\"}",
+                  "text": "Marketing/Media"
+                },
+                {
+                  "id": "pulse_updated_mktsr0pq",
+                  "type": "last_updated",
+                  "value": "{\"updated_at\":\"2026-04-15T06:03:05Z\",\"updater_id\":\"79740967\"}",
+                  "text": "2026-04-15 06:03:05 UTC"
+                },
+                {
+                  "id": "label9",
+                  "type": "status",
+                  "value": "{\"index\":14,\"post_id\":null,\"changed_at\":\"2025-05-27T11:34:58.701Z\"}",
+                  "text": "Anti Gray Serum"
+                },
+                {
+                  "id": "person",
+                  "type": "people",
+                  "value": "{\"changed_at\":\"2026-04-14T09:47:48.863Z\",\"personsAndTeams\":[{\"id\":41215707,\"kind\":\"person\"},{\"id\":40905843,\"kind\":\"person\"},{\"id\":94852717,\"kind\":\"person\"},{\"id\":101019167,\"kind\":\"person\"}]}",
+                  "text": "Anton Shpakovskiy, Aviad Eilam, Tom Tabaritzi, Lilian Krumholz"
+                },
+                {
+                  "id": "people",
+                  "type": "people",
+                  "value": null,
+                  "text": ""
+                },
+                {
+                  "id": "numbers",
+                  "type": "numbers",
+                  "value": "\"2\"",
+                  "text": "2"
+                },
+                {
+                  "id": "link",
+                  "type": "link",
+                  "value": null,
+                  "text": ""
+                },
+                {
+                  "id": "link4__1",
+                  "type": "link",
+                  "value": "{\"url\":\"https://www.dropbox.com/scl/fo/kxus9wogxvw2dozj16abb/ALzsX78KfKW-MG-7SVcAmQE?rlkey=9a68kpr0uzd0imi53uoiwkufb&dl=0\",\"text\":\"https://www.dropbox.com/scl/fo/kxus9wogxvw2dozj16abb/ALzsX78KfKW-MG-7SVcAmQE?rlkey=9a68kpr0uzd0imi53uoiwkufb&dl=0\",\"changed_at\":\"2025-10-16T09:37:13.741Z\"}",
+                  "text": "https://www.dropbox.com/scl/fo/kxus9wogxvw2dozj16abb/ALzsX78KfKW-MG-7SVcAmQE?rlkey=9a68kpr0uzd0imi53uoiwkufb&dl=0"
+                },
+                {
+                  "id": "link1__1",
+                  "type": "link",
+                  "value": null,
+                  "text": ""
+                },
+                {
+                  "id": "color_mkt4dcn4",
+                  "type": "status",
+                  "value": null,
+                  "text": "Not Uploaded"
+                },
+                {
+                  "id": "color_mkyggphw",
+                  "type": "status",
+                  "value": null,
+                  "text": null
+                },
+                {
+                  "id": "color_mkygz443",
+                  "type": "status",
+                  "value": null,
+                  "text": null
+                },
+                {
+                  "id": "long_text_mkn8c1ax",
+                  "type": "long_text",
+                  "value": "{\"text\":\"Concept Summary: A fast-paced, animated explainer that dives into the science behind Particle's Anti-Gray Serum, demystifying how it naturally restores hair color + UGC content & transformations\",\"changed_at\":\"2025-05-27T11:34:58.703Z\"}",
+                  "text": "Concept Summary: A fast-paced, animated explainer that dives into the science behind Particle's Anti-Gray Serum, demystifying how it naturally restores hair color + UGC content & transformations"
+                },
+                {
+                  "id": "subitems",
+                  "type": "subtasks",
+                  "value": null,
+                  "text": null
+                },
+                {
+                  "id": "long_text_Mjj2uK4g",
+                  "type": "long_text",
+                  "value": "{\"text\":\"Inside your hair follicles, there's a pigment called melanin \u2014 it's what gives your hair its color.\\nOver time, your body produces less melanin... and boom \u2014 gray hair.\\nParticle's Anti-Gray Serum targets this exact process.\\nPowered by active peptides and catalase enzymes, it helps reactivate the natural production of pigment at the follicle level.\\nThink of it like giving your hair cells a wake-up call \u2014 restoring color from the root, without dyes or cover-ups.\\nAnd it\u2019s not just cosmetic. It supports healthier, stronger hair while doing it.\\nClinically-backed. Dermatologist-recommended. Real results in real men.\\nYou won\u2019t wake up black-haired overnight \u2014 but with daily use, you\u2019ll notice the difference in weeks.\\nThousands already have.\\nThe science is clear. The gray doesn\u2019t have to stay.\\nTry Particle Anti-Gray Serum today.\",\"changed_at\":\"2025-05-27T11:34:58.704Z\"}",
+                  "text": "Inside your hair follicles, there's a pigment called melanin \u2014 it's what gives your hair its color.\nOver time, your body produces less melanin... and boom \u2014 gray hair.\nParticle's Anti-Gray Serum targets this exact process.\nPowered by active peptides and catalase enzymes, it helps reactivate the natural production of pigment at the follicle level.\nThink of it like giving your hair cells a wake-up call \u2014 restoring color from the root, without dyes or cover-ups.\nAnd it\u2019s not just cosmetic. It supports healthier, stronger hair while doing it.\nClinically-backed. Dermatologist-recommended. Real results in real men.\nYou won\u2019t wake up black-haired overnight \u2014 but with daily use, you\u2019ll notice the difference in weeks.\nThousands already have.\nThe science is clear. The gray doesn\u2019t have to stay.\nTry Particle Anti-Gray Serum today."
+                },
+                {
+                  "id": "short_text_mkn8n4bx",
+                  "type": "text",
+                  "value": "\"Going gray isn\u2019t just aging \u2014 it\u2019s biology\"",
+                  "text": "Going gray isn\u2019t just aging \u2014 it\u2019s biology"
+                },
+                {
+                  "id": "multi_select_Mjj2VFZH",
+                  "type": "dropdown",
+                  "value": "{\"ids\":[2],\"changed_at\":\"2025-05-27T11:34:58.705Z\"}",
+                  "text": "9x16"
+                },
+                {
+                  "id": "files",
+                  "type": "file",
+                  "value": null,
+                  "text": ""
+                },
+                {
+                  "id": "time_tracking__1",
+                  "type": "time_tracking",
+                  "value": "{\"running\":\"true\",\"duration\":18218329,\"startDate\":1758027839,\"changed_at\":\"2025-09-16T13:03:59.394Z\"}",
+                  "text": "5060:38:49"
+                },
+                {
+                  "id": "date_mkvsvjrm",
+                  "type": "date",
+                  "value": null,
+                  "text": ""
+                },
+                {
+                  "id": "duration_mkynps36",
+                  "type": "time_tracking",
+                  "value": "{\"running\":\"false\",\"duration\":15462,\"startDate\":1767709136,\"changed_at\":\"2026-01-06T16:02:08.421Z\"}",
+                  "text": "04:17:42"
+                },
+                {
+                  "id": "duration_mkynnrsn",
+                  "type": "time_tracking",
+                  "value": "{\"running\":\"false\",\"duration\":0,\"startDate\":null}",
+                  "text": ""
+                },
+                {
+                  "id": "duration_mkynptaf",
+                  "type": "time_tracking",
+                  "value": "{\"running\":\"true\",\"duration\":13183,\"startDate\":1776232985,\"changed_at\":\"2026-04-15T06:03:05.631Z\"}",
+                  "text": "03:39:43"
+                },
+                {
+                  "id": "duration_mkynnxec",
+                  "type": "time_tracking",
+                  "value": "{\"running\":\"false\",\"duration\":0,\"startDate\":null}",
+                  "text": ""
+                },
+                {
+                  "id": "duration_mkynmfnr",
+                  "type": "time_tracking",
+                  "value": "{\"running\":\"false\",\"duration\":0,\"startDate\":null}",
+                  "text": ""
+                },
+                {
+                  "id": "date_mkynphw8",
+                  "type": "date",
+                  "value": "{\"date\":\"2026-04-15\",\"time\":null,\"changed_at\":\"2026-04-14T17:00:56.724Z\"}",
+                  "text": "2026-04-15"
+                },
+                {
+                  "id": "numeric_mkypwm8y",
+                  "type": "numbers",
+                  "value": "\"4\"",
+                  "text": "4"
+                },
+                {
+                  "id": "single_selectu06tevn",
+                  "type": "status",
+                  "value": null,
+                  "text": ""
+                },
+                {
+                  "id": "text_mm1fn440",
+                  "type": "text",
+                  "value": null,
+                  "text": ""
+                },
+                {
+                  "id": "color_mm1q4zbz",
+                  "type": "status",
+                  "value": null,
+                  "text": null
+                },
+                {
+                  "id": "numeric_mm209bwg",
+                  "type": "numbers",
+                  "value": null,
+                  "text": ""
+                }
+              ]
+            },
+            {
+              "name": "Anti Gray Serum | Meta | Claude | Split Screen: Box Dye vs. AGS Contrast",
+              "column_values": [
+                {
+                  "id": "timeline3__1",
+                  "type": "timeline",
+                  "value": "{\"to\":\"2026-04-23\",\"from\":\"2026-04-19\",\"changed_at\":\"2026-04-13T07:46:03.115Z\"}",
+                  "text": "2026-04-19 - 2026-04-23"
+                },
+                {
+                  "id": "boolean_mm20pwgn",
+                  "type": "checkbox",
+                  "value": "{\"checked\":false}",
+                  "text": ""
+                },
+                {
+                  "id": "date_Mjj2cG7T",
+                  "type": "date",
+                  "value": null,
+                  "text": ""
+                },
+                {
+                  "id": "priority_mkm11w0a",
+                  "type": "status",
+                  "value": "{\"index\":109}",
+                  "text": "Medium"
+                },
+                {
+                  "id": "status",
+                  "type": "status",
+                  "value": "{\"index\":12,\"post_id\":null,\"changed_at\":\"2026-04-14T09:45:05.041Z\"}",
+                  "text": "Ready for Assignment"
+                },
+                {
+                  "id": "label4",
+                  "type": "status",
+                  "value": "{\"index\":156}",
+                  "text": "Script (<1 min)"
+                },
+                {
+                  "id": "label",
+                  "type": "status",
+                  "value": "{\"index\":105}",
+                  "text": "Marketing/Media"
+                },
+                {
+                  "id": "pulse_updated_mktsr0pq",
+                  "type": "last_updated",
+                  "value": "{\"updated_at\":\"2026-04-15T06:02:54Z\",\"updater_id\":\"79740967\"}",
+                  "text": "2026-04-15 06:02:54 UTC"
+                },
+                {
+                  "id": "label9",
+                  "type": "status",
+                  "value": "{\"index\":14}",
+                  "text": "Anti Gray Serum"
+                },
+                {
+                  "id": "person",
+                  "type": "people",
+                  "value": "{\"personsAndTeams\":[{\"id\":40905843,\"kind\":\"person\"},{\"id\":94852717,\"kind\":\"person\"},{\"id\":41215707,\"kind\":\"person\"},{\"id\":101019167,\"kind\":\"person\"}]}",
+                  "text": "Aviad Eilam, Tom Tabaritzi, Anton Shpakovskiy, Lilian Krumholz"
+                },
+                {
+                  "id": "people",
+                  "type": "people",
+                  "value": null,
+                  "text": ""
+                },
+                {
+                  "id": "numbers",
+                  "type": "numbers",
+                  "value": "\"2\"",
+                  "text": "2"
+                },
+                {
+                  "id": "link",
+                  "type": "link",
+                  "value": null,
+                  "text": ""
+                },
+                {
+                  "id": "link4__1",
+                  "type": "link",
+                  "value": "{\"url\":\"https://www.dropbox.com/scl/fo/eh2bgvfc9xuhewwv9yki3/AJCh8wnicY_JvM8meLXyP38?rlkey=pxti4mskszru1w3s8ea7prmcl&dl=0\",\"text\":\"Dropbox Link\",\"changed_at\":\"2026-03-31T12:55:27.096Z\"}",
+                  "text": "Dropbox Link - https://www.dropbox.com/scl/fo/eh2bgvfc9xuhewwv9yki3/AJCh8wnicY_JvM8meLXyP38?rlkey=pxti4mskszru1w3s8ea7prmcl&dl=0"
+                },
+                {
+                  "id": "link1__1",
+                  "type": "link",
+                  "value": null,
+                  "text": ""
+                },
+                {
+                  "id": "color_mkt4dcn4",
+                  "type": "status",
+                  "value": null,
+                  "text": "Not Uploaded"
+                },
+                {
+                  "id": "color_mkyggphw",
+                  "type": "status",
+                  "value": null,
+                  "text": null
+                },
+                {
+                  "id": "color_mkygz443",
+                  "type": "status",
+                  "value": null,
+                  "text": null
+                },
+                {
+                  "id": "long_text_mkn8c1ax",
+                  "type": "long_text",
+                  "value": "{\"text\":\"Horizontal split screen. Top panel: guy (cast 40s) in bathroom struggling with box dye \u2014 gloves on, stained fingers, checking the clock, messy sink. Bottom panel: second guy (cast 40s) spraying AGS onto gray temples, calm, clean, done in seconds. Both panels run simultaneously so the contrast is immediate. Midway, top panel guy is still waiting with dye on his hair while bottom panel guy is already styled and walking out. End: bottom panel guy looks into camera, text overlay \\\"Not a dye. A pigment restorer.\\\"\"}",
+                  "text": "Horizontal split screen. Top panel: guy (cast 40s) in bathroom struggling with box dye \u2014 gloves on, stained fingers, checking the clock, messy sink. Bottom panel: second guy (cast 40s) spraying AGS onto gray temples, calm, clean, done in seconds. Both panels run simultaneously so the contrast is immediate. Midway, top panel guy is still waiting with dye on his hair while bottom panel guy is already styled and walking out. End: bottom panel guy looks into camera, text overlay \"Not a dye. A pigment restorer.\""
+                },
+                {
+                  "id": "subitems",
+                  "type": "subtasks",
+                  "value": null,
+                  "text": null
+                },
+                {
+                  "id": "long_text_Mjj2uK4g",
+                  "type": "long_text",
+                  "value": "{\"text\":\"Script A:\\n(0\u20133s) Split screen opens. Top: rubber gloves, box dye. Bottom: AGS bottle, clean hands.\\n(3\u20138s) Top: applying dye, mess on counter, timer set for 30 minutes. Bottom: three sprays on temples, done.\\n(8\u201315s) Top: still waiting, checking mirror anxiously. Bottom: styled, heading out the door.\\n(15\u201318s) Bottom panel takes over full screen. Product shot. \\\"Not a dye. A pigment restorer.\\\" Free shipping + guarantee + CTA.\"}",
+                  "text": "Script A:\n(0\u20133s) Split screen opens. Top: rubber gloves, box dye. Bottom: AGS bottle, clean hands.\n(3\u20138s) Top: applying dye, mess on counter, timer set for 30 minutes. Bottom: three sprays on temples, done.\n(8\u201315s) Top: still waiting, checking mirror anxiously. Bottom: styled, heading out the door.\n(15\u201318s) Bottom panel takes over full screen. Product shot. \"Not a dye. A pigment restorer.\" Free shipping + guarantee + CTA."
+                },
+                {
+                  "id": "short_text_mkn8n4bx",
+                  "type": "text",
+                  "value": null,
+                  "text": ""
+                },
+                {
+                  "id": "multi_select_Mjj2VFZH",
+                  "type": "dropdown",
+                  "value": null,
+                  "text": null
+                },
+                {
+                  "id": "files",
+                  "type": "file",
+                  "value": "{\"files\":[{\"name\":\"Screenshot 2026-03-31 at 0.27.18.png\",\"assetId\":2867117533,\"isImage\":\"true\",\"fileType\":\"ASSET\"}]}",
+                  "text": "https://particle-for-men.monday.com/protected_static/11978994/resources/2867117533/Screenshot%202026-03-31%20at%200.27.18.png"
+                },
+                {
+                  "id": "time_tracking__1",
+                  "type": "time_tracking",
+                  "value": "{\"duration\":0}",
+                  "text": ""
+                },
+                {
+                  "id": "date_mkvsvjrm",
+                  "type": "date",
+                  "value": "{\"date\":\"2026-03-31\",\"changed_at\":\"2026-03-31T12:51:53.197Z\"}",
+                  "text": "2026-03-31"
+                },
+                {
+                  "id": "duration_mkynps36",
+                  "type": "time_tracking",
+                  "value": "{\"running\":\"false\",\"duration\":0,\"startDate\":null}",
+                  "text": ""
+                },
+                {
+                  "id": "duration_mkynnrsn",
+                  "type": "time_tracking",
+                  "value": "{\"running\":\"false\",\"duration\":0,\"startDate\":null}",
+                  "text": ""
+                },
+                {
+                  "id": "duration_mkynptaf",
+                  "type": "time_tracking",
+                  "value": "{\"running\":\"true\",\"duration\":13195,\"startDate\":1776232973,\"changed_at\":\"2026-04-15T06:02:53.925Z\"}",
+                  "text": "03:39:55"
+                },
+                {
+                  "id": "duration_mkynnxec",
+                  "type": "time_tracking",
+                  "value": "{\"running\":\"false\",\"duration\":0,\"startDate\":null}",
+                  "text": ""
+                },
+                {
+                  "id": "duration_mkynmfnr",
+                  "type": "time_tracking",
+                  "value": "{\"running\":\"false\",\"duration\":0,\"startDate\":null}",
+                  "text": ""
+                },
+                {
+                  "id": "date_mkynphw8",
+                  "type": "date",
+                  "value": "{\"date\":\"2026-04-15\",\"time\":null,\"changed_at\":\"2026-04-14T17:00:54.019Z\"}",
+                  "text": "2026-04-15"
+                },
+                {
+                  "id": "numeric_mkypwm8y",
+                  "type": "numbers",
+                  "value": "\"0\"",
+                  "text": "0"
+                },
+                {
+                  "id": "single_selectu06tevn",
+                  "type": "status",
+                  "value": "{\"index\":0}",
+                  "text": "Meta"
+                },
+                {
+                  "id": "text_mm1fn440",
+                  "type": "text",
+                  "value": null,
+                  "text": ""
+                },
+                {
+                  "id": "color_mm1q4zbz",
+                  "type": "status",
+                  "value": "{\"index\":3}",
+                  "text": "Claude"
+                },
+                {
+                  "id": "numeric_mm209bwg",
+                  "type": "numbers",
+                  "value": null,
+                  "text": ""
+                }
+              ]
+            },
+            {
+              "name": "Sunscreen | Meta | Claude | Sun Damage Is Permanent \u2014 Undo vs. Prevent",
+              "column_values": [
+                {
+                  "id": "timeline3__1",
+                  "type": "timeline",
+                  "value": "{\"to\":\"2026-04-23\",\"from\":\"2026-04-19\",\"changed_at\":\"2026-04-13T07:46:04.706Z\"}",
+                  "text": "2026-04-19 - 2026-04-23"
+                },
+                {
+                  "id": "boolean_mm20pwgn",
+                  "type": "checkbox",
+                  "value": "{\"checked\":false}",
+                  "text": ""
+                },
+                {
+                  "id": "date_Mjj2cG7T",
+                  "type": "date",
+                  "value": null,
+                  "text": ""
+                },
+                {
+                  "id": "priority_mkm11w0a",
+                  "type": "status",
+                  "value": "{\"index\":109}",
+                  "text": "Medium"
+                },
+                {
+                  "id": "status",
+                  "type": "status",
+                  "value": "{\"index\":12,\"post_id\":null,\"changed_at\":\"2026-04-14T09:45:05.041Z\"}",
+                  "text": "Ready for Assignment"
+                },
+                {
+                  "id": "label4",
+                  "type": "status",
+                  "value": "{\"index\":15,\"post_id\":null,\"changed_at\":\"2026-04-09T09:18:20.307Z\"}",
+                  "text": "Long Form (+1 min)"
+                },
+                {
+                  "id": "label",
+                  "type": "status",
+                  "value": "{\"index\":105}",
+                  "text": "Marketing/Media"
+                },
+                {
+                  "id": "pulse_updated_mktsr0pq",
+                  "type": "last_updated",
+                  "value": "{\"updated_at\":\"2026-04-15T06:02:54Z\",\"updater_id\":\"79740967\"}",
+                  "text": "2026-04-15 06:02:54 UTC"
+                },
+                {
+                  "id": "label9",
+                  "type": "status",
+                  "value": "{\"index\":10}",
+                  "text": "Sunscreen"
+                },
+                {
+                  "id": "person",
+                  "type": "people",
+                  "value": "{\"personsAndTeams\":[{\"id\":40905843,\"kind\":\"person\"},{\"id\":94852717,\"kind\":\"person\"},{\"id\":41215707,\"kind\":\"person\"},{\"id\":101019167,\"kind\":\"person\"}]}",
+                  "text": "Aviad Eilam, Tom Tabaritzi, Anton Shpakovskiy, Lilian Krumholz"
+                },
+                {
+                  "id": "people",
+                  "type": "people",
+                  "value": null,
+                  "text": ""
+                },
+                {
+                  "id": "numbers",
+                  "type": "numbers",
+                  "value": "\"3\"",
+                  "text": "3"
+                },
+                {
+                  "id": "link",
+                  "type": "link",
+                  "value": null,
+                  "text": ""
+                },
+                {
+                  "id": "link4__1",
+                  "type": "link",
+                  "value": "{\"url\":\"https://www.dropbox.com/scl/fo/hs1bjelil497hwf2c8t4i/AFfKarT4Pz9ZY0T_-JUoO6k?rlkey=l5g3kcq18738u1e5ky4fjwz9y&dl=0\",\"text\":\"Dropbox Link\",\"changed_at\":\"2026-04-08T16:55:30.857Z\"}",
+                  "text": "Dropbox Link - https://www.dropbox.com/scl/fo/hs1bjelil497hwf2c8t4i/AFfKarT4Pz9ZY0T_-JUoO6k?rlkey=l5g3kcq18738u1e5ky4fjwz9y&dl=0"
+                },
+                {
+                  "id": "link1__1",
+                  "type": "link",
+                  "value": null,
+                  "text": ""
+                },
+                {
+                  "id": "color_mkt4dcn4",
+                  "type": "status",
+                  "value": null,
+                  "text": "Not Uploaded"
+                },
+                {
+                  "id": "color_mkyggphw",
+                  "type": "status",
+                  "value": null,
+                  "text": null
+                },
+                {
+                  "id": "color_mkygz443",
+                  "type": "status",
+                  "value": null,
+                  "text": null
+                },
+                {
+                  "id": "long_text_mkn8c1ax",
+                  "type": "long_text",
+                  "value": "{\"text\":\"A calm, authoritative VO-driven motion graphics ad that reframes sunscreen as the foundational step that makes every other grooming product work. The core tension: men are spending money to repair damage the sun is freely inflicting every day \u2014 Face Shield is the missing first step.\"}",
+                  "text": "A calm, authoritative VO-driven motion graphics ad that reframes sunscreen as the foundational step that makes every other grooming product work. The core tension: men are spending money to repair damage the sun is freely inflicting every day \u2014 Face Shield is the missing first step."
+                },
+                {
+                  "id": "subitems",
+                  "type": "subtasks",
+                  "value": null,
+                  "text": null
+                },
+                {
+                  "id": "long_text_Mjj2uK4g",
+                  "type": "long_text",
+                  "value": "{\"text\":\"Every product you're using to fight dark spots, wrinkles, and eye bags \u2014 the sun is working against all of it. Every single day.\\n\\nUV exposure is the number one cause of visible aging in men. Not genetics. Not stress. The sun. And it doesn't matter how good your Face Cream is if you're walking outside unprotected. You're repairing at night what you're breaking every morning.\\n\\nThe reason most men skip sunscreen isn't laziness. It's that every formula they've tried was built for someone else. White residue that sits on your skin. Greasy film that wrecks your whole look. Visible cast that makes it obvious.\\n\\nParticle Face Shield was engineered for men who actually have to leave the house. Transparent formula. Lightweight feel. Broad-spectrum SPF protection that disappears the second you apply it. No white marks. No shine. No one knows you're wearing it \u2014 they just notice your skin looks better.\\n\\nOver a million men have upgraded their routine with Particle. Face Shield is the step most of them wish they'd added first.\\n\\nYou wouldn't spend money fixing your car and then leave it out in a hailstorm. Stop spending on repair and skipping protection. Try Face Shield free for 30 days \u2014 if it's not the best sunscreen you've ever worn, send it back. Free shipping. No risk. particleformen.com\"}",
+                  "text": "Every product you're using to fight dark spots, wrinkles, and eye bags \u2014 the sun is working against all of it. Every single day.\n\nUV exposure is the number one cause of visible aging in men. Not genetics. Not stress. The sun. And it doesn't matter how good your Face Cream is if you're walking outside unprotected. You're repairing at night what you're breaking every morning.\n\nThe reason most men skip sunscreen isn't laziness. It's that every formula they've tried was built for someone else. White residue that sits on your skin. Greasy film that wrecks your whole look. Visible cast that makes it obvious.\n\nParticle Face Shield was engineered for men who actually have to leave the house. Transparent formula. Lightweight feel. Broad-spectrum SPF protection that disappears the second you apply it. No white marks. No shine. No one knows you're wearing it \u2014 they just notice your skin looks better.\n\nOver a million men have upgraded their routine with Particle. Face Shield is the step most of them wish they'd added first.\n\nYou wouldn't spend money fixing your car and then leave it out in a hailstorm. Stop spending on repair and skipping protection. Try Face Shield free for 30 days \u2014 if it's not the best sunscreen you've ever worn, send it back. Free shipping. No risk. particleformen.com"
+                },
+                {
+                  "id": "short_text_mkn8n4bx",
+                  "type": "text",
+                  "value": "\"You're spending $69 to fix what the sun breaks for free.\"",
+                  "text": "You're spending $69 to fix what the sun breaks for free."
+                },
+                {
+                  "id": "multi_select_Mjj2VFZH",
+                  "type": "dropdown",
+                  "value": null,
+                  "text": null
+                },
+                {
+                  "id": "files",
+                  "type": "file",
+                  "value": null,
+                  "text": ""
+                },
+                {
+                  "id": "time_tracking__1",
+                  "type": "time_tracking",
+                  "value": "{\"duration\":0}",
+                  "text": ""
+                },
+                {
+                  "id": "date_mkvsvjrm",
+                  "type": "date",
+                  "value": "{\"date\":\"2026-04-08\",\"changed_at\":\"2026-04-08T16:54:53.058Z\"}",
+                  "text": "2026-04-08"
+                },
+                {
+                  "id": "duration_mkynps36",
+                  "type": "time_tracking",
+                  "value": "{\"running\":\"false\",\"duration\":0,\"startDate\":null}",
+                  "text": ""
+                },
+                {
+                  "id": "duration_mkynnrsn",
+                  "type": "time_tracking",
+                  "value": "{\"running\":\"false\",\"duration\":0,\"startDate\":null}",
+                  "text": ""
+                },
+                {
+                  "id": "duration_mkynptaf",
+                  "type": "time_tracking",
+                  "value": "{\"running\":\"true\",\"duration\":13195,\"startDate\":1776232973,\"changed_at\":\"2026-04-15T06:02:54.145Z\"}",
+                  "text": "03:39:55"
+                },
+                {
+                  "id": "duration_mkynnxec",
+                  "type": "time_tracking",
+                  "value": "{\"running\":\"false\",\"duration\":0,\"startDate\":null}",
+                  "text": ""
+                },
+                {
+                  "id": "duration_mkynmfnr",
+                  "type": "time_tracking",
+                  "value": "{\"running\":\"false\",\"duration\":0,\"startDate\":null}",
+                  "text": ""
+                },
+                {
+                  "id": "date_mkynphw8",
+                  "type": "date",
+                  "value": "{\"date\":\"2026-04-15\",\"time\":null,\"changed_at\":\"2026-04-14T17:00:50.913Z\"}",
+                  "text": "2026-04-15"
+                },
+                {
+                  "id": "numeric_mkypwm8y",
+                  "type": "numbers",
+                  "value": "\"0\"",
+                  "text": "0"
+                },
+                {
+                  "id": "single_selectu06tevn",
+                  "type": "status",
+                  "value": "{\"index\":0}",
+                  "text": "Meta"
+                },
+                {
+                  "id": "text_mm1fn440",
+                  "type": "text",
+                  "value": null,
+                  "text": ""
+                },
+                {
+                  "id": "color_mm1q4zbz",
+                  "type": "status",
+                  "value": "{\"index\":3}",
+                  "text": "Claude"
+                },
+                {
+                  "id": "numeric_mm209bwg",
+                  "type": "numbers",
+                  "value": "\"69\"",
+                  "text": "69"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "extensions": {
+    "request_id": "c88acf25-40d9-96e5-8574-d2022023550d"
+  }
+}

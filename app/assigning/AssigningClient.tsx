@@ -25,14 +25,17 @@ const SEGMENT_COLORS = [
   "#14B8A6", "#A855F7", "#22C55E", "#FB923C", "#60A5FA",
 ];
 
+const VIDEO_EDITORS = ["Matan", "Yael", "Omri", "Isaac"];
+const DESIGNERS = ["Dan", "Natalie Abesdid"];
+
 export function AssigningClient({
   initialBoard, initialAllWeeksData, initialGoals,
 }: AssigningClientProps) {
   const [activeBoard, setActiveBoard]   = useState<BoardType>(initialBoard);
   const [allWeeksData, setAllWeeksData] = useState<AllWeeksData | null>(initialAllWeeksData);
   const [goals, setGoals]               = useState<WeekGoals>(initialGoals);
-  const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
-  const [loadingItems, setLoadingItems]   = useState(false);
+  const [modalState, setModalState]     = useState<{ type: "product" | "assignee"; value: string } | null>(null);
+  const [loadingItems, setLoadingItems] = useState(false);
   const [error, setError]               = useState<string | null>(null);
   const [lastRefresh, setLastRefresh]   = useState<Date | null>(null);
 
@@ -91,12 +94,16 @@ export function AssigningClient({
     setActiveBoard(board);
     setAllWeeksData(null);
     setGoals({ totalTarget: null, products: {} });
-    setSelectedProduct(null);
+    setModalState(null);
   };
 
-  // Derived
+  // Derived - main assignment list (filtered by marketing/media)
   const nextWeekItems  = allWeeksData?.nextWeek.items ?? [];
   const assignedItems  = nextWeekItems.filter((i) => isAssignedStatus(i.status) && !i.isPipeline);
+
+  // Derived - all departments for assignee counts
+  const allDeptsNextWeek = allWeeksData?.nextWeek.allItems ?? [];
+  const allAssignedItems = allDeptsNextWeek.filter((i) => isAssignedStatus(i.status) && !i.isPipeline);
 
   const productNames = Array.from(new Set([
     ...assignedItems.map((i) => i.product),
@@ -123,6 +130,14 @@ export function AssigningClient({
 
   const totalAssigned = assignedItems.length;
   const totalGoal     = Object.values(goals.products).reduce((s, v) => s + v, 0);
+
+  const relevantAssignees = activeBoard === "video" ? VIDEO_EDITORS : DESIGNERS;
+  const assigneeCounts = relevantAssignees.map((name) => ({
+    name,
+    count: allAssignedItems.filter((item) =>
+      item.assignees?.some((a) => a.toLowerCase().includes(name.toLowerCase()))
+    ).length,
+  }));
 
   return (
     <div className="min-h-screen hero-gradient">
@@ -167,27 +182,22 @@ export function AssigningClient({
           </div>
         </div>
 
-        {/* Summary badges */}
-        {!loadingItems && (totalAssigned > 0 || totalGoal > 0) && (
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-900/60 border border-zinc-800">
-              <UserCheck className="w-3.5 h-3.5 text-violet-400" />
-              <span className="text-zinc-300 text-sm font-medium">Assigned</span>
-              <span className="ml-1 px-2 py-0.5 rounded-full bg-zinc-800 text-violet-300 text-xs font-semibold">{totalAssigned}</span>
-            </div>
-            {totalGoal > 0 && (
-              <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-900/60 border border-zinc-800">
-                <BarChart3 className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-zinc-300 text-sm font-medium">Goal</span>
-                <span className="ml-1 px-2 py-0.5 rounded-full bg-zinc-800 text-emerald-300 text-xs font-semibold">{totalGoal}</span>
-              </div>
-            )}
-            {totalGoal > 0 && (
-              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 text-xs font-medium ml-auto">
-                <BarChart3 className="w-3 h-3" />
-                {Math.round((totalAssigned / totalGoal) * 100)}% of goal assigned
-              </span>
-            )}
+
+        {/* Assignee counts */}
+        {!loadingItems && (
+          <div className="flex flex-wrap items-center gap-2">
+            {assigneeCounts.map((a) => (
+              <button
+                key={a.name}
+                onClick={() => setModalState({ type: "assignee", value: a.name })}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900/40 border border-zinc-800/80 hover:bg-zinc-800/60 transition-colors text-left"
+              >
+                <span className="text-zinc-400 text-sm font-medium">{a.name}</span>
+                <span className={cn("text-xs font-bold px-1.5 py-0.5 rounded", a.count > 0 ? "bg-violet-500/20 text-violet-300" : "bg-zinc-800 text-zinc-500")}>
+                  {a.count}
+                </span>
+              </button>
+            ))}
           </div>
         )}
 
@@ -224,18 +234,28 @@ export function AssigningClient({
                 assigned={p.assigned}
                 goal={p.goal}
                 idx={idx}
-                onClick={() => setSelectedProduct(p.product)}
+                onClick={() => setModalState({ type: "product", value: p.product })}
               />
             ))}
           </div>
         )}
 
         {/* Task modal */}
-        {selectedProduct && (() => {
-          const pd = productData.find((p) => p.product === selectedProduct);
-          const modalItems = pd?.items ?? [];
+        {modalState && (() => {
+          const isProduct = modalState.type === "product";
+          
+          let modalItems: DashboardItem[] = [];
+          if (isProduct) {
+            const pd = productData.find((p) => p.product === modalState.value);
+            modalItems = pd?.items ?? [];
+          } else {
+            modalItems = allAssignedItems.filter((i) =>
+              i.assignees?.some((a) => a.toLowerCase().includes(modalState.value.toLowerCase()))
+            );
+          }
+
           return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setSelectedProduct(null)}>
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setModalState(null)}>
               <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
               <div
                 className="relative z-10 w-full max-w-3xl max-h-[80vh] flex flex-col rounded-2xl border border-zinc-700 bg-zinc-900 shadow-2xl animate-fade-in"
@@ -243,12 +263,12 @@ export function AssigningClient({
               >
                 <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
                   <div>
-                    <p className="text-base font-semibold text-zinc-100">{selectedProduct}</p>
+                    <p className="text-base font-semibold text-zinc-100">{modalState.value}</p>
                     <p className="text-xs text-zinc-500 mt-0.5">
                       {modalItems.length} assigned task{modalItems.length !== 1 ? "s" : ""} for next week
                     </p>
                   </div>
-                  <button onClick={() => setSelectedProduct(null)} className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors">
+                  <button onClick={() => setModalState(null)} className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
@@ -256,12 +276,14 @@ export function AssigningClient({
                   {modalItems.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 text-zinc-600 gap-2">
                       <UserCheck className="w-8 h-8" />
-                      <p className="text-sm">No assigned tasks for this product</p>
+                      <p className="text-sm">No assigned tasks for this {isProduct ? "product" : "person"}</p>
                     </div>
                   ) : (
                     modalItems.map((item) => (
                       <a key={item.id} href={getMondayItemUrl(item)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 px-6 py-3.5 hover:bg-zinc-800/40 transition-colors cursor-pointer">
-                        <p className="flex-1 text-sm text-zinc-200 truncate" title={item.name}>{formatTaskName(item.name)}</p>
+                        <p className="flex-1 text-sm text-zinc-200 truncate" title={item.name}>
+                          {isProduct ? formatTaskName(item.name) : item.name}
+                        </p>
                         <div className="w-36 flex-shrink-0"><StatusBadge label={item.status} color={item.statusColor} /></div>
                         <span className="hidden sm:block w-[130px] flex-shrink-0 text-xs text-zinc-500 truncate">{item.groupTitle}</span>
                         <span className={cn(

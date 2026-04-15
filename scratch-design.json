@@ -1,0 +1,208 @@
+{
+  "data": {
+    "boards": [
+      {
+        "columns": [
+          {
+            "id": "name",
+            "title": "Name",
+            "type": "name"
+          },
+          {
+            "id": "subitems",
+            "title": "Subitems",
+            "type": "subtasks"
+          },
+          {
+            "id": "timeline_1_Mjj5Yton",
+            "title": "Timeline",
+            "type": "timeline"
+          },
+          {
+            "id": "boolean_mm205cd9",
+            "title": "Tracking",
+            "type": "checkbox"
+          },
+          {
+            "id": "date_Mjj20aki",
+            "title": "Deadline",
+            "type": "date"
+          },
+          {
+            "id": "priority__1",
+            "title": "Priority",
+            "type": "status"
+          },
+          {
+            "id": "status",
+            "title": "Status",
+            "type": "status"
+          },
+          {
+            "id": "label9",
+            "title": "Product/Bundle",
+            "type": "status"
+          },
+          {
+            "id": "status_1__1",
+            "title": "Department",
+            "type": "status"
+          },
+          {
+            "id": "people_Mjj2RrZM",
+            "title": "Requested By",
+            "type": "people"
+          },
+          {
+            "id": "people",
+            "title": "Designer",
+            "type": "people"
+          },
+          {
+            "id": "date_mkvsn8f9",
+            "title": "Created On",
+            "type": "date"
+          },
+          {
+            "id": "link0__1",
+            "title": "Dropbox",
+            "type": "link"
+          },
+          {
+            "id": "link",
+            "title": "Figma Link",
+            "type": "link"
+          },
+          {
+            "id": "pulse_updated_mktsa3a7",
+            "title": "Last updated",
+            "type": "last_updated"
+          },
+          {
+            "id": "time_tracking__1",
+            "title": "Time tracking",
+            "type": "time_tracking"
+          },
+          {
+            "id": "color_mkt4v23g",
+            "title": "Uploaded On Meta",
+            "type": "status"
+          },
+          {
+            "id": "color_mkygqbvb",
+            "title": "Uploaded On AppLovin",
+            "type": "status"
+          },
+          {
+            "id": "color_mkygmtg5",
+            "title": "Uploaded On Google",
+            "type": "status"
+          },
+          {
+            "id": "long_text_mkngjytf",
+            "title": "Supporting Text",
+            "type": "long_text"
+          },
+          {
+            "id": "multi_select_Mjj2tEdu",
+            "title": "Sizes",
+            "type": "dropdown"
+          },
+          {
+            "id": "short_text_Mjj2RnHq",
+            "title": "Other Sizes",
+            "type": "text"
+          },
+          {
+            "id": "upload_file3__1",
+            "title": "Relevant Files",
+            "type": "file"
+          },
+          {
+            "id": "text_mkz3xf50",
+            "title": "Brand",
+            "type": "text"
+          },
+          {
+            "id": "text_mkz3cae3",
+            "title": "Product type",
+            "type": "text"
+          },
+          {
+            "id": "text_mkz3bw35",
+            "title": "Model/variant",
+            "type": "text"
+          },
+          {
+            "id": "numberpuotbeaf",
+            "title": "Versions",
+            "type": "numbers"
+          },
+          {
+            "id": "long_textpvqldjpg",
+            "title": "Concept",
+            "type": "long_text"
+          },
+          {
+            "id": "duration_mkynzqv9",
+            "title": "Time To Upload",
+            "type": "time_tracking"
+          },
+          {
+            "id": "duration_mkynqdzn",
+            "title": "From Request to Completion",
+            "type": "time_tracking"
+          },
+          {
+            "id": "duration_mkynew3p",
+            "title": "Time in Stuck",
+            "type": "time_tracking"
+          },
+          {
+            "id": "date_mkyprwrt",
+            "title": "Timer Control",
+            "type": "date"
+          },
+          {
+            "id": "numeric_mkypsvvr",
+            "title": "Current Day of Week",
+            "type": "numbers"
+          },
+          {
+            "id": "duration_mkyn55k",
+            "title": "Reviewing Time",
+            "type": "time_tracking"
+          },
+          {
+            "id": "duration_mkynccfs",
+            "title": "Working Time",
+            "type": "time_tracking"
+          },
+          {
+            "id": "single_selectrz7230p",
+            "title": "Platform",
+            "type": "status"
+          },
+          {
+            "id": "single_selectt2aekp5",
+            "title": "AI Assist",
+            "type": "status"
+          },
+          {
+            "id": "single_selectess8b86",
+            "title": "Type of Website Task",
+            "type": "status"
+          },
+          {
+            "id": "text_mm1grv7e",
+            "title": "Ad Name",
+            "type": "text"
+          }
+        ]
+      }
+    ]
+  },
+  "extensions": {
+    "request_id": "c070c7f3-6b6b-9678-a073-9e494806bd1a"
+  }
+}

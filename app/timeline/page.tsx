@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import { BOARD_IDS } from "@/lib/types";
 import { getAllWeeksData, getBoardGroups } from "@/lib/items-server";
 import { TimelineClient } from "./TimelineClient";

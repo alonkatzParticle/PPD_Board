@@ -45,12 +45,16 @@ export async function GET(req: NextRequest) {
       .map((i) => normalizeMondayItem(i, boardType, columnMapping, true))
       .filter((i): i is NonNullable<typeof i> => i !== null);
 
+    const allDeptsNormalized = rawItems
+      .map((i) => normalizeMondayItem(i, boardType, columnMapping, true))
+      .filter((i): i is NonNullable<typeof i> => i !== null);
+
     // ── allWeeks mode ────────────────────────────────────────────────────────
     if (allWeeks && mode !== "intake") {
       return NextResponse.json({
-        lastWeek: buildWeekData(normalized, intakeNormalized, columnMapping, knownProducts, -1),
-        thisWeek: buildWeekData(normalized, intakeNormalized, columnMapping, knownProducts,  0),
-        nextWeek: buildWeekData(normalized, intakeNormalized, columnMapping, knownProducts,  1),
+        lastWeek: buildWeekData(normalized, intakeNormalized, allDeptsNormalized, columnMapping, knownProducts, -1),
+        thisWeek: buildWeekData(normalized, intakeNormalized, allDeptsNormalized, columnMapping, knownProducts,  0),
+        nextWeek: buildWeekData(normalized, intakeNormalized, allDeptsNormalized, columnMapping, knownProducts,  1),
         cached: age < BOARD_ITEM_TTL,
         cacheAgeSeconds: Math.round(age / 1000),
       });
@@ -70,7 +74,7 @@ export async function GET(req: NextRequest) {
     }
 
     // ── Single-week mode ─────────────────────────────────────────────────────
-    const weekData = buildWeekData(normalized, intakeNormalized, columnMapping, knownProducts, weekOffset);
+    const weekData = buildWeekData(normalized, intakeNormalized, allDeptsNormalized, columnMapping, knownProducts, weekOffset);
     return NextResponse.json({
       ...weekData,
       cached: age < BOARD_ITEM_TTL,

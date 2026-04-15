@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import { BOARD_IDS } from "@/lib/types";
 import { toWeekKey } from "@/lib/targets";
 import { getWeekWindow } from "@/lib/utils";

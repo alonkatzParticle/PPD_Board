@@ -24,6 +24,7 @@ import type {
 
 export interface WeekData {
   items: DashboardItem[];
+  allItems: DashboardItem[]; // No department filter applied
   productSummary: ProductSummary[];
   columnMapping: ColumnMapping;
   total: number;
@@ -128,6 +129,7 @@ async function fetchIntakeItems(
   const colIds = [
     columnMapping.timeline, columnMapping.department,
     columnMapping.product, columnMapping.status,
+    columnMapping.assignees,
   ].filter(Boolean) as string[];
 
   const itemFields = buildItemFields(colIds);
@@ -159,6 +161,7 @@ async function fetchTimelineItems(
   const colIds = [
     columnMapping.timeline, columnMapping.department,
     columnMapping.product, columnMapping.status,
+    columnMapping.assignees,
   ].filter(Boolean) as string[];
 
   const itemFields = buildItemFields(colIds);
@@ -260,6 +263,7 @@ export async function getBoardMetadata(boardId: string) {
 export function buildWeekData(
   normalized: DashboardItem[],
   intakeNormalized: DashboardItem[],
+  allDeptsNormalized: DashboardItem[],
   columnMapping: ColumnMapping,
   knownProducts: string[] | undefined,
   offset: number
@@ -273,6 +277,8 @@ export function buildWeekData(
     filtered = [...filtered, ...pipeline];
   }
 
+  const allFiltered = filterByWeekWindow(allDeptsNormalized, weekWindow);
+
   filtered.sort((a, b) => {
     if (!a.timelineEnd && !b.timelineEnd) return 0;
     if (!a.timelineEnd) return 1;
@@ -282,6 +288,7 @@ export function buildWeekData(
 
   return {
     items: filtered,
+    allItems: allFiltered,
     productSummary: buildProductSummary(filtered, knownProducts),
     columnMapping,
     total: filtered.length,
@@ -362,10 +369,14 @@ export async function getAllWeeksData(
     .map((i) => normalizeMondayItem(i, boardType, columnMapping, true))
     .filter((i): i is NonNullable<typeof i> => i !== null);
 
+  const allDeptsNormalized = cacheEntry.items
+    .map((i) => normalizeMondayItem(i, boardType, columnMapping, true))
+    .filter((i): i is NonNullable<typeof i> => i !== null);
+
   return {
-    lastWeek:  buildWeekData(normalized, intakeNormalized, columnMapping, knownProducts, -1),
-    thisWeek:  buildWeekData(normalized, intakeNormalized, columnMapping, knownProducts, 0),
-    nextWeek:  buildWeekData(normalized, intakeNormalized, columnMapping, knownProducts, 1),
+    lastWeek:  buildWeekData(normalized, intakeNormalized, allDeptsNormalized, columnMapping, knownProducts, -1),
+    thisWeek:  buildWeekData(normalized, intakeNormalized, allDeptsNormalized, columnMapping, knownProducts, 0),
+    nextWeek:  buildWeekData(normalized, intakeNormalized, allDeptsNormalized, columnMapping, knownProducts, 1),
     cached:    age < BOARD_ITEM_TTL,
     cacheAgeSeconds: Math.round(age / 1000),
   };

@@ -180,6 +180,13 @@ export function normalizeMondayItem(
   const getCol = (id: string): MondayColumnValue | undefined =>
     item.column_values.find((c) => c.id === id);
 
+  // Assignees
+  const assigneesCol = getCol(columnMapping.assignees);
+  const assigneesText = assigneesCol?.text?.trim() || "";
+  const assignees = assigneesText
+    ? assigneesText.split(",").map((s) => s.trim()).filter(Boolean)
+    : [];
+
   // Department filter (skipped in intake mode)
   const deptCol = getCol(columnMapping.department);
   const dept = deptCol?.text?.trim() ?? "";
@@ -221,6 +228,7 @@ export function normalizeMondayItem(
     timelineEnd: end,
     isOverdue: isOverdue(end),
     isDueSoon: isDueSoon(end),
+    assignees,
   };
 }
 
@@ -241,6 +249,7 @@ export function detectColumnMapping(
     status: find("status", "color") || find("status"),
     department: find("department"),
     type: find("type"),
+    assignees: find("editor") || find("designer") || find("", "people"),
   };
 }
 

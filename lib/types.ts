@@ -55,6 +55,7 @@ export interface DashboardItem {
   isOverdue: boolean;
   isDueSoon: boolean; // within 7 days
   isPipeline?: boolean; // true = counted as pipeline credit for next week
+  assignees: string[]; // array of assigned person names
 }
 
 // Statuses that qualify a task as "pipeline credit" for next week
@@ -77,6 +78,7 @@ export interface ColumnMapping {
   status: string;
   department: string;
   type: string;
+  assignees: string;
 }
 
 // Department values to filter on
