@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { RefreshCw, AlertTriangle, UserCheck, CalendarDays, BarChart3 } from "lucide-react";
+import { RefreshCw, AlertTriangle, UserCheck, CalendarDays, BarChart3, X } from "lucide-react";
 import type { BoardType, DashboardItem } from "@/lib/types";
-import { getWeekWindow, cn } from "@/lib/utils";
+import { getWeekWindow, cn, formatDate } from "@/lib/utils";
 import { toWeekKey, fetchWeekGoals, type WeekGoals } from "@/lib/targets";
 import { getCached, setCached, bustCacheByPrefix } from "@/lib/clientCache";
 import { BoardToggle } from "@/components/BoardToggle";
+import { StatusBadge } from "@/components/StatusBadge";
 
 interface BoardsData {
   video: { id: string; name: string } | null;
@@ -35,6 +36,7 @@ export default function AssigningPage() {
   const [boardsData, setBoardsData]     = useState<BoardsData | null>(null);
   const [allWeeksData, setAllWeeksData] = useState<AllWeeksData | null>(null);
   const [goals, setGoals]               = useState<WeekGoals>({ totalTarget: null, products: {} });
+  const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   const [loadingBoards, setLoadingBoards] = useState(true);
   const [loadingItems, setLoadingItems]   = useState(false);
   const [error, setError]               = useState<string | null>(null);
@@ -114,6 +116,7 @@ export default function AssigningPage() {
     setActiveBoard(board);
     setAllWeeksData(null);
     setGoals({ totalTarget: null, products: {} });
+    setSelectedProduct(null);
   };
 
   // ── Derive data ─────────────────────────────────────────────────────────────
@@ -129,7 +132,8 @@ export default function AssigningPage() {
   interface ProductData {
     product: string;
     assigned: number;
-    goal: number | null; // null = no goal set for this product
+    goal: number | null;
+    items: DashboardItem[];
   }
 
   const productData: ProductData[] = productNames
@@ -137,6 +141,7 @@ export default function AssigningPage() {
       product,
       assigned: assignedItems.filter((i) => i.product === product).length,
       goal:     goals.products[product] ?? null,
+      items:    assignedItems.filter((i) => i.product === product),
     }))
     .filter((p) => p.assigned > 0 || p.goal !== null);
 
@@ -253,10 +258,69 @@ export default function AssigningPage() {
                 assigned={p.assigned}
                 goal={p.goal}
                 idx={idx}
+                onClick={() => setSelectedProduct(p.product)}
               />
             ))}
           </div>
         )}
+
+        {/* ── Task modal ───────────────────────────────────────────────────── */}
+        {selectedProduct && (() => {
+          const pd = productData.find((p) => p.product === selectedProduct);
+          const modalItems = pd?.items ?? [];
+          return (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              onClick={() => setSelectedProduct(null)}
+            >
+              <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+              <div
+                className="relative z-10 w-full max-w-3xl max-h-[80vh] flex flex-col rounded-2xl border border-zinc-700 bg-zinc-900 shadow-2xl animate-fade-in"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Modal header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
+                  <div>
+                    <p className="text-base font-semibold text-zinc-100">{selectedProduct}</p>
+                    <p className="text-xs text-zinc-500 mt-0.5">
+                      {modalItems.length} assigned task{modalItems.length !== 1 ? "s" : ""} for next week
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setSelectedProduct(null)}
+                    className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Task list */}
+                <div className="overflow-y-auto flex-1 divide-y divide-zinc-800/60">
+                  {modalItems.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-16 text-zinc-600 gap-2">
+                      <UserCheck className="w-8 h-8" />
+                      <p className="text-sm">No assigned tasks for this product</p>
+                    </div>
+                  ) : (
+                    modalItems.map((item) => (
+                      <div key={item.id} className="flex items-center gap-4 px-6 py-3.5 hover:bg-zinc-800/40 transition-colors">
+                        <p className="flex-1 text-sm text-zinc-200 truncate" title={item.name}>{item.name}</p>
+                        <div className="w-36 flex-shrink-0"><StatusBadge label={item.status} color={item.statusColor} /></div>
+                        <span className="hidden sm:block w-[130px] flex-shrink-0 text-xs text-zinc-500 truncate">{item.groupTitle}</span>
+                        <span className={cn(
+                          "w-20 flex-shrink-0 text-xs font-medium text-right",
+                          item.isOverdue ? "text-red-400" : item.isDueSoon ? "text-amber-400" : "text-zinc-400"
+                        )}>
+                          {formatDate(item.timelineEnd)}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
       </main>
     </div>
@@ -266,9 +330,9 @@ export default function AssigningPage() {
 // ── Product card ──────────────────────────────────────────────────────────────
 
 function ProductCard({
-  product, assigned, goal, idx,
+  product, assigned, goal, idx, onClick,
 }: {
-  product: string; assigned: number; goal: number | null; idx: number;
+  product: string; assigned: number; goal: number | null; idx: number; onClick: () => void;
 }) {
   const hasGoal   = goal !== null && goal > 0;
   const pct       = hasGoal ? Math.min(assigned / goal!, 1) : 0;
@@ -299,7 +363,8 @@ function ProductCard({
 
   return (
     <div
-      className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 flex flex-col gap-3 animate-fade-in hover:border-zinc-700 transition-colors"
+      onClick={onClick}
+      className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 flex flex-col gap-3 animate-fade-in hover:border-zinc-700 hover:bg-zinc-800/30 cursor-pointer transition-colors"
       style={{ animationDelay: `${idx * 30}ms` }}
     >
       {/* Name + count / goal */}
