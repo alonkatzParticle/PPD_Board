@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { RefreshCw, AlertTriangle, UserCheck, CalendarDays, BarChart3, ClipboardList } from "lucide-react";
-import type { BoardType, DashboardItem, PlannedTask } from "@/lib/types";
+import { RefreshCw, AlertTriangle, UserCheck, CalendarDays, BarChart3 } from "lucide-react";
+import type { BoardType, DashboardItem } from "@/lib/types";
 import { getWeekWindow, cn } from "@/lib/utils";
-import { toWeekKey } from "@/lib/targets";
+import { toWeekKey, fetchWeekGoals, type WeekGoals } from "@/lib/targets";
 import { getCached, setCached, bustCacheByPrefix } from "@/lib/clientCache";
 import { BoardToggle } from "@/components/BoardToggle";
 
@@ -34,7 +34,7 @@ export default function AssigningPage() {
   const [activeBoard, setActiveBoard]   = useState<BoardType>("video");
   const [boardsData, setBoardsData]     = useState<BoardsData | null>(null);
   const [allWeeksData, setAllWeeksData] = useState<AllWeeksData | null>(null);
-  const [plannedTasks, setPlannedTasks] = useState<PlannedTask[]>([]);
+  const [goals, setGoals]               = useState<WeekGoals>({ totalTarget: null, products: {} });
   const [loadingBoards, setLoadingBoards] = useState(true);
   const [loadingItems, setLoadingItems]   = useState(false);
   const [error, setError]               = useState<string | null>(null);
@@ -63,6 +63,11 @@ export default function AssigningPage() {
     }
     loadBoards();
   }, []);
+
+  // ── Load goals (per-product weekly targets) ─────────────────────────────────
+  useEffect(() => {
+    fetchWeekGoals(activeBoard, weekKey).then(setGoals);
+  }, [activeBoard, weekKey]);
 
   // ── Load next week items ────────────────────────────────────────────────────
   const loadItems = useCallback(async (forceRefresh = false) => {
@@ -104,64 +109,47 @@ export default function AssigningPage() {
     if (boardsData) loadItems();
   }, [loadItems, boardsData]);
 
-  // ── Load planned tasks from DB ──────────────────────────────────────────────
-  const loadPlannedTasks = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/planned-tasks?boardType=${activeBoard}&weekKey=${weekKey}`);
-      if (!res.ok) return;
-      const tasks: PlannedTask[] = await res.json();
-      setPlannedTasks(tasks);
-    } catch { /* silent */ }
-  }, [activeBoard, weekKey]);
-
-  useEffect(() => {
-    loadPlannedTasks();
-  }, [loadPlannedTasks]);
-
   // ── Board switch ────────────────────────────────────────────────────────────
   const handleBoardSwitch = (board: BoardType) => {
     setActiveBoard(board);
     setAllWeeksData(null);
-    setPlannedTasks([]);
+    setGoals({ totalTarget: null, products: {} });
   };
 
   // ── Derive data ─────────────────────────────────────────────────────────────
   const nextWeekItems  = allWeeksData?.nextWeek.items ?? [];
   const assignedItems  = nextWeekItems.filter((i) => isAssignedStatus(i.status) && !i.isPipeline);
 
-  // Union of products across assigned Monday items + planned DB tasks
+  // All products that have assigned tasks OR have a goal set
   const productNames = Array.from(new Set([
     ...assignedItems.map((i) => i.product),
-    ...plannedTasks.map((t) => t.product),
+    ...Object.keys(goals.products),
   ])).filter((p) => p && p !== "—");
 
   interface ProductData {
     product: string;
     assigned: number;
-    planned: number;
-    assignedItems: DashboardItem[];
+    goal: number | null; // null = no goal set for this product
   }
 
   const productData: ProductData[] = productNames
     .map((product) => ({
       product,
-      assigned:      assignedItems.filter((i) => i.product === product).length,
-      planned:       plannedTasks.filter((t) => t.product === product).length,
-      assignedItems: assignedItems.filter((i) => i.product === product),
+      assigned: assignedItems.filter((i) => i.product === product).length,
+      goal:     goals.products[product] ?? null,
     }))
-    .filter((p) => p.assigned > 0 || p.planned > 0);
+    .filter((p) => p.assigned > 0 || p.goal !== null);
 
-  // Sort: most behind (highest remaining) first; no-plan products go last
+  // Sort: most behind (highest goal - assigned) first; no-goal products go last
   productData.sort((a, b) => {
-    const aRemaining = a.planned > 0 ? Math.max(0, a.planned - a.assigned) : -1;
-    const bRemaining = b.planned > 0 ? Math.max(0, b.planned - b.assigned) : -1;
+    const aRemaining = a.goal !== null ? Math.max(0, a.goal - a.assigned) : -1;
+    const bRemaining = b.goal !== null ? Math.max(0, b.goal - b.assigned) : -1;
     if (bRemaining !== aRemaining) return bRemaining - aRemaining;
     return b.assigned - a.assigned;
   });
 
   const totalAssigned = assignedItems.length;
-  const totalPlanned  = plannedTasks.length;
-  const totalPct      = totalPlanned > 0 ? Math.round((totalAssigned / totalPlanned) * 100) : null;
+  const totalGoal     = Object.values(goals.products).reduce((s, v) => s + v, 0);
 
   return (
     <div className="min-h-screen hero-gradient">
@@ -200,7 +188,7 @@ export default function AssigningPage() {
             )}
             <button
               id="refresh-btn"
-              onClick={() => { loadItems(true); loadPlannedTasks(); }}
+              onClick={() => { loadItems(true); fetchWeekGoals(activeBoard, weekKey).then(setGoals); }}
               disabled={loadingItems}
               className={cn(
                 "flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-all border border-transparent hover:border-zinc-700",
@@ -214,7 +202,7 @@ export default function AssigningPage() {
         </div>
 
         {/* ── Summary badges ───────────────────────────────────────────────── */}
-        {!loadingItems && (totalAssigned > 0 || totalPlanned > 0) && (
+        {!loadingItems && (totalAssigned > 0 || totalGoal > 0) && (
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-900/60 border border-zinc-800">
               <UserCheck className="w-3.5 h-3.5 text-violet-400" />
@@ -223,17 +211,19 @@ export default function AssigningPage() {
                 {totalAssigned}
               </span>
             </div>
-            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-900/60 border border-zinc-800">
-              <ClipboardList className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-zinc-300 text-sm font-medium">Planned</span>
-              <span className="ml-1 px-2 py-0.5 rounded-full bg-zinc-800 text-emerald-300 text-xs font-semibold">
-                {totalPlanned}
-              </span>
-            </div>
-            {totalPct !== null && (
+            {totalGoal > 0 && (
+              <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-900/60 border border-zinc-800">
+                <BarChart3 className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="text-zinc-300 text-sm font-medium">Goal</span>
+                <span className="ml-1 px-2 py-0.5 rounded-full bg-zinc-800 text-emerald-300 text-xs font-semibold">
+                  {totalGoal}
+                </span>
+              </div>
+            )}
+            {totalGoal > 0 && (
               <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 text-xs font-medium ml-auto">
                 <BarChart3 className="w-3 h-3" />
-                {totalPct}% assigned
+                {Math.round((totalAssigned / totalGoal) * 100)}% of goal assigned
               </span>
             )}
           </div>
@@ -251,7 +241,7 @@ export default function AssigningPage() {
             <UserCheck className="w-12 h-12" />
             <p className="text-base font-medium text-zinc-500">No data yet</p>
             <p className="text-sm text-zinc-600 text-center max-w-xs">
-              No pending tasks scheduled for next week, or no planned tasks in the system.
+              No pending tasks scheduled for next week, or no product goals set in Planning.
             </p>
           </div>
         ) : (
@@ -261,7 +251,7 @@ export default function AssigningPage() {
                 key={p.product}
                 product={p.product}
                 assigned={p.assigned}
-                planned={p.planned}
+                goal={p.goal}
                 idx={idx}
               />
             ))}
@@ -276,32 +266,32 @@ export default function AssigningPage() {
 // ── Product card ──────────────────────────────────────────────────────────────
 
 function ProductCard({
-  product, assigned, planned, idx,
+  product, assigned, goal, idx,
 }: {
-  product: string; assigned: number; planned: number; idx: number;
+  product: string; assigned: number; goal: number | null; idx: number;
 }) {
-  const hasPlan   = planned > 0;
-  const pct       = hasPlan ? Math.min(assigned / planned, 1) : 0;
-  const remaining = hasPlan ? Math.max(0, planned - assigned) : null;
+  const hasGoal   = goal !== null && goal > 0;
+  const pct       = hasGoal ? Math.min(assigned / goal!, 1) : 0;
+  const remaining = hasGoal ? Math.max(0, goal! - assigned) : null;
 
-  const barColor = !hasPlan
+  const barColor = !hasGoal
     ? "bg-zinc-600"
     : pct >= 1   ? "bg-emerald-500"
     : pct >= 0.5 ? "bg-amber-500"
     :              "bg-red-500";
 
-  const countColor = !hasPlan
+  const countColor = !hasGoal
     ? "text-zinc-500"
     : pct >= 1   ? "text-emerald-400"
     : pct >= 0.5 ? "text-amber-400"
     :              "text-red-400";
 
-  const statusText = !hasPlan          ? null
+  const statusText = !hasGoal          ? null
     : pct >= 1                          ? "Fully assigned ✓"
-    : remaining === planned             ? "Not yet assigned"
+    : remaining === goal                ? "Not yet assigned"
     : `${remaining} more to assign`;
 
-  const statusColor = !hasPlan
+  const statusColor = !hasGoal
     ? ""
     : pct >= 1   ? "text-emerald-400"
     : pct >= 0.5 ? "text-amber-400"
@@ -312,23 +302,24 @@ function ProductCard({
       className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 flex flex-col gap-3 animate-fade-in hover:border-zinc-700 transition-colors"
       style={{ animationDelay: `${idx * 30}ms` }}
     >
-      {/* Name + fraction */}
+      {/* Name + count / goal */}
       <div className="flex items-start justify-between gap-2">
         <p className="text-sm font-semibold text-zinc-200 leading-snug line-clamp-2" title={product}>
           {product}
         </p>
-        {hasPlan ? (
+        {hasGoal ? (
           <div className="flex-shrink-0 text-right leading-none">
             <span className={cn("text-2xl font-black", countColor)}>{assigned}</span>
-            <span className="text-sm text-zinc-600 font-semibold"> / {planned}</span>
+            <span className="text-sm text-zinc-600 font-semibold"> / {goal}</span>
           </div>
         ) : (
+          // No goal → gray count only, no denominator
           <span className={cn("text-2xl font-black flex-shrink-0", countColor)}>{assigned}</span>
         )}
       </div>
 
       {/* Progress bar + status */}
-      {hasPlan && (
+      {hasGoal && (
         <div className="space-y-1.5">
           <div className="h-1.5 rounded-full bg-zinc-800 overflow-hidden">
             <div
@@ -342,8 +333,8 @@ function ProductCard({
         </div>
       )}
 
-      {!hasPlan && (
-        <p className="text-xs text-zinc-700">No planned tasks drafted</p>
+      {!hasGoal && (
+        <p className="text-xs text-zinc-700">No goal set in Planning</p>
       )}
     </div>
   );
