@@ -140,7 +140,7 @@ export function PlanningClient({
     loadPlannedTasks();
   }, [loadPlannedTasks]);
 
-  // ── Auto-refresh every 10 min during Israeli working hours (8am–6pm local) ──
+  // ── Auto-refresh every 1 min during Israeli working hours (8am–6pm local) ──
   useEffect(() => {
     const interval = setInterval(() => {
       const hour = new Date().getHours();
@@ -148,7 +148,7 @@ export function PlanningClient({
         loadAllWeeks(true, true);
         loadPlannedTasks();
       }
-    }, 10 * 60 * 1000);
+    }, 60 * 1000);
     return () => clearInterval(interval);
   }, [loadAllWeeks, loadPlannedTasks]);
 

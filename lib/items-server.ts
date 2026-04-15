@@ -77,7 +77,7 @@ interface BoardCache {
 
 export const boardItemCache = new Map<string, BoardCache>();
 export const inflightFetches = new Map<string, Promise<BoardCache>>();
-export const BOARD_ITEM_TTL = 5 * 60 * 1000; // 5 minutes
+export const BOARD_ITEM_TTL = 1 * 60 * 1000; // 1 minute
 
 const INTAKE_STAGE_KEYWORDS = ["form request", "pending", "ready for assignment"];
 
@@ -183,39 +183,15 @@ async function fetchTimelineItems(
 
 // ── Cached fetch ──────────────────────────────────────────────────────────────
 
-export async function fetchBoardCached(
+async function executeFetchAndSave(
   boardId: string,
   columnMapping: ColumnMapping,
   allGroups: { id: string; title: string }[],
   mode: ItemsMode,
-  force = false
+  cacheKey: string
 ): Promise<BoardCache> {
-  const cacheKey = `${boardId}:${mode}`;
-
-  if (!force) {
-    const mem = boardItemCache.get(cacheKey);
-    if (mem && Date.now() - mem.fetchedAt < BOARD_ITEM_TTL) return mem;
-  }
-
-  if (!force && hasDb()) {
-    try {
-      await ensureSchema();
-      const db = await getItemsCache(boardId, mode);
-      if (db) {
-        const age = Date.now() - db.fetchedAt.getTime();
-        if (age < BOARD_ITEM_TTL) {
-          const cached: BoardCache = { items: db.items, columnMapping: db.columnMapping, fetchedAt: db.fetchedAt.getTime() };
-          boardItemCache.set(cacheKey, cached);
-          return cached;
-        }
-      }
-    } catch { /* DB unavailable — continue */ }
-  }
-
-  if (!force) {
-    const inflight = inflightFetches.get(cacheKey);
-    if (inflight) return inflight;
-  }
+  const inflight = inflightFetches.get(cacheKey);
+  if (inflight) return inflight;
 
   const promise = (async (): Promise<BoardCache> => {
     try {
@@ -238,6 +214,45 @@ export async function fetchBoardCached(
 
   inflightFetches.set(cacheKey, promise);
   return promise;
+}
+
+export async function fetchBoardCached(
+  boardId: string,
+  columnMapping: ColumnMapping,
+  allGroups: { id: string; title: string }[],
+  mode: ItemsMode,
+  force = false
+): Promise<BoardCache> {
+  const cacheKey = `${boardId}:${mode}`;
+
+  if (!force) {
+    const mem = boardItemCache.get(cacheKey);
+    if (mem && Date.now() - mem.fetchedAt < BOARD_ITEM_TTL) return mem;
+  }
+
+  if (!force && hasDb()) {
+    try {
+      await ensureSchema();
+      const db = await getItemsCache(boardId, mode);
+      if (db) {
+        const age = Date.now() - db.fetchedAt.getTime();
+        const cached: BoardCache = { items: db.items, columnMapping: db.columnMapping, fetchedAt: db.fetchedAt.getTime() };
+        
+        if (age < BOARD_ITEM_TTL) {
+          boardItemCache.set(cacheKey, cached);
+          return cached;
+        } else {
+          // Stale-While-Revalidate (SWR): Return instant stale cache, kick off background sync
+          boardItemCache.set(cacheKey, cached);
+          executeFetchAndSave(boardId, columnMapping, allGroups, mode, cacheKey).catch(console.error);
+          return cached;
+        }
+      }
+    } catch { /* DB unavailable — continue */ }
+  }
+
+  // If forced, or neither memory nor DB existed, await a blocking fetch
+  return executeFetchAndSave(boardId, columnMapping, allGroups, mode, cacheKey);
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────

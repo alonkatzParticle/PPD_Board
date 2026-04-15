@@ -53,7 +53,7 @@ export function AssigningClient({
     fetchWeekGoals(activeBoard, weekKey).then(setGoals);
   }, [activeBoard, weekKey]);
 
-  const loadItems = useCallback(async (forceRefresh = false) => {
+  const loadItems = useCallback(async (forceRefresh = false, silent = false) => {
     const boardId  = BOARD_IDS[activeBoard];
     const cacheKey = `allweeks:${boardId}`;
 
@@ -62,7 +62,7 @@ export function AssigningClient({
       if (hit) { setAllWeeksData(hit); return; }
     }
 
-    setLoadingItems(true);
+    if (!silent) setLoadingItems(true);
     setError(null);
     try {
       if (forceRefresh) bustCacheByPrefix(`allweeks:${boardId}`);
@@ -79,15 +79,26 @@ export function AssigningClient({
       setAllWeeksData(data);
       setLastRefresh(new Date());
     } catch (e) {
-      setError((e as Error).message);
+      if (!silent) setError((e as Error).message);
     } finally {
-      setLoadingItems(false);
+      if (!silent) setLoadingItems(false);
     }
   }, [activeBoard]);
 
   useEffect(() => {
     if (itemsLoadSkipped.current) { itemsLoadSkipped.current = false; return; }
     loadItems();
+  }, [loadItems]);
+
+  // ── Auto-refresh every 1 min during Israeli working hours (8am–6pm local) ──
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const hour = new Date().getHours();
+      if (hour >= 8 && hour < 18) {
+        loadItems(true, true);
+      }
+    }, 60 * 1000);
+    return () => clearInterval(interval);
   }, [loadItems]);
 
   const handleBoardSwitch = (board: BoardType) => {

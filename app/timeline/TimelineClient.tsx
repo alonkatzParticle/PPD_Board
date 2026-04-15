@@ -128,12 +128,15 @@ export function TimelineClient({
     loadAllWeeks();
   }, [loadAllWeeks]);
 
-  // Background refresh every 5 min
+  // Background refresh every 1 min during Israeli working hours
   useEffect(() => {
     if (refreshIntervalRef.current) clearInterval(refreshIntervalRef.current);
     refreshIntervalRef.current = setInterval(() => {
-      loadAllWeeks(false, true);
-    }, 5 * 60 * 1000);
+      const hour = new Date().getHours();
+      if (hour >= 8 && hour < 18) {
+        loadAllWeeks(true, true);
+      }
+    }, 60 * 1000);
     return () => { if (refreshIntervalRef.current) clearInterval(refreshIntervalRef.current); };
   }, [loadAllWeeks]);
 
