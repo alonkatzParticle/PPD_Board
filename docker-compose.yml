@@ -6,7 +6,7 @@ services:
       args:
         MONDAY_API_KEY: ${MONDAY_API_KEY}
         MONDAY_API_URL: ${MONDAY_API_URL:-https://api.monday.com/v2}
-        POSTGRES_DATABASE_URL: postgresql://appuser:apppass@ppd-db:5432/mydb?sslmode=disable
+        POSTGRES_DATABASE_URL: postgresql://appuser:apppass@db:5432/mydb?sslmode=disable
     image: ppd-dashboard:latest
     container_name: ppd-dashboard
     ports:
@@ -15,11 +15,13 @@ services:
       - NODE_ENV=production
       - MONDAY_API_KEY=${MONDAY_API_KEY}
       - MONDAY_API_URL=${MONDAY_API_URL:-https://api.monday.com/v2}
-      - POSTGRES_DATABASE_URL=postgresql://appuser:apppass@ppd-db:5432/mydb?sslmode=disable
+      - POSTGRES_DATABASE_URL=postgresql://appuser:apppass@db:5432/mydb?sslmode=disable
       - CRON_SECRET=${CRON_SECRET}
     depends_on:
       db:
         condition: service_healthy
+    dns:
+      - 127.0.0.11
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/boards"]
