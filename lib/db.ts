@@ -1,19 +1,40 @@
 import { neon } from "@neondatabase/serverless";
+import postgres from "postgres";
 import type { MondayItem, ColumnMapping, BoardType, PlannedTask } from "./types";
 
-let _sql: ReturnType<typeof neon> | null = null;
+// ── Driver selection ──────────────────────────────────────────────────────────
+// Neon serverless only works over HTTP to Neon's cloud API.
+// For a standard local/VPS Postgres container we use the `postgres` TCP driver.
+
+type SqlFn = (strings: TemplateStringsArray, ...values: unknown[]) => Promise<unknown[]>;
+
+let _neonSql: ReturnType<typeof neon> | null = null;
+let _pgSql: ReturnType<typeof postgres> | null = null;
+
+function isNeonUrl(url: string): boolean {
+  return url.includes("neon.tech");
+}
 
 export function hasDb(): boolean {
   return !!(process.env.DATABASE_URL || process.env.POSTGRES_DATABASE_URL);
 }
 
-export function getDb() {
-  if (!_sql) {
-    const url = process.env.DATABASE_URL || process.env.POSTGRES_DATABASE_URL;
-    if (!url) throw new Error("DATABASE_URL or POSTGRES_DATABASE_URL environment variable is not set");
-    _sql = neon(url);
+export function getDb(): SqlFn {
+  const url = process.env.DATABASE_URL || process.env.POSTGRES_DATABASE_URL;
+  if (!url) throw new Error("DATABASE_URL or POSTGRES_DATABASE_URL environment variable is not set");
+
+  if (isNeonUrl(url)) {
+    // Vercel / Neon cloud — use HTTP driver
+    if (!_neonSql) _neonSql = neon(url);
+    return _neonSql as unknown as SqlFn;
+  } else {
+    // VPS / local Docker — use standard TCP postgres driver
+    if (!_pgSql) {
+      _pgSql = postgres(url, { ssl: false, max: 5 });
+    }
+    // Wrap `postgres` tagged-template so it returns Promise<unknown[]>
+    return _pgSql as unknown as SqlFn;
   }
-  return _sql;
 }
 
 /**
