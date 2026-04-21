@@ -10,11 +10,10 @@ services:
     container_name: ppd-dashboard
     ports:
       - "3004:3000"
-    env_file:
-      - .env
-    environment:
-      # Override DATABASE_URL to point to the local postgres container (runtime only)
-      DATABASE_URL: postgresql://appuser:apppass@db:5432/mydb
+    volumes:
+      # Mount .env.local into the app — Next.js reads this fresh on each `next start`.
+      # This avoids all build-time env var baking issues.
+      - ./.env.local:/app/.env.local:ro
     depends_on:
       db:
         condition: service_healthy
