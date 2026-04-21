@@ -2,20 +2,10 @@ import { NextResponse } from "next/server";
 import { hasDb, getDb, ensureSchema } from "@/lib/db";
 
 export async function GET() {
-  // Dump ALL env vars (names only for safety) for debugging
-  const allEnvKeys = Object.keys(process.env).sort();
-  const dbRelatedVars: Record<string, string> = {};
-  for (const key of allEnvKeys) {
-    if (key.includes('POSTGRES') || key.includes('DATABASE') || key.includes('MONDAY') || key.includes('CRON')) {
-      dbRelatedVars[key] = process.env[key] ? 'SET' : 'EMPTY';
-    }
-  }
-
   const envDiag = {
-    DATABASE_URL: process.env['DATABASE_URL'] ? "set" : "missing",
-    POSTGRES_DATABASE_URL: process.env['POSTGRES_DATABASE_URL'] ? "set" : "missing",
-    NODE_ENV: process.env['NODE_ENV'],
-    allRelevantKeys: dbRelatedVars,
+    DATABASE_URL: process.env.DATABASE_URL ? "set" : "missing",
+    POSTGRES_DATABASE_URL: process.env.POSTGRES_DATABASE_URL ? "set" : "missing",
+    NODE_ENV: process.env.NODE_ENV,
   };
 
   const status: Record<string, unknown> = {
