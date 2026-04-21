@@ -16,11 +16,13 @@ function isNeonUrl(url: string): boolean {
 }
 
 export function hasDb(): boolean {
-  return !!(process.env.DATABASE_URL || process.env.POSTGRES_DATABASE_URL);
+  // Use bracket notation to prevent Next.js from statically replacing
+  // process.env.VAR at build time (which bakes in 'undefined' when no .env exists)
+  return !!(process.env['DATABASE_URL'] || process.env['POSTGRES_DATABASE_URL']);
 }
 
 export function getDb(): SqlFn {
-  const url = process.env.DATABASE_URL || process.env.POSTGRES_DATABASE_URL;
+  const url = process.env['DATABASE_URL'] || process.env['POSTGRES_DATABASE_URL'];
   if (!url) throw new Error("DATABASE_URL or POSTGRES_DATABASE_URL environment variable is not set");
 
   if (isNeonUrl(url)) {
@@ -32,7 +34,6 @@ export function getDb(): SqlFn {
     if (!_pgSql) {
       _pgSql = postgres(url, { ssl: false, max: 5 });
     }
-    // Wrap `postgres` tagged-template so it returns Promise<unknown[]>
     return _pgSql as unknown as SqlFn;
   }
 }
