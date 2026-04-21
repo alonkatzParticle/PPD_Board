@@ -26,16 +26,25 @@ export function getDb(): SqlFn {
   if (!url) throw new Error("DATABASE_URL or POSTGRES_DATABASE_URL environment variable is not set");
 
   if (isNeonUrl(url)) {
-    // Vercel / Neon cloud — use HTTP driver
     if (!_neonSql) _neonSql = neon(url);
     return _neonSql as unknown as SqlFn;
   } else {
-    // VPS / local Docker — use standard TCP postgres driver
+    // VPS / local Docker — reset on error so stale connections are not reused
     if (!_pgSql) {
-      _pgSql = postgres(url, { ssl: false, max: 5 });
+      _pgSql = postgres(url, {
+        ssl: false,
+        max: 5,
+        connect_timeout: 10,
+        onnotice: () => {},
+      });
     }
     return _pgSql as unknown as SqlFn;
   }
+}
+
+export function resetDb() {
+  _pgSql = null;
+  _neonSql = null;
 }
 
 /**
@@ -43,7 +52,8 @@ export function getDb(): SqlFn {
  * Safe to call on every request — uses IF NOT EXISTS.
  */
 export async function ensureSchema() {
-  const sql = getDb();
+  try {
+    const sql = getDb();
 
   // Goals table (per team, shared)
   await sql`
@@ -84,6 +94,10 @@ export async function ensureSchema() {
 
   // Add done column to existing tables (safe to run repeatedly)
   await sql`ALTER TABLE planned_tasks ADD COLUMN IF NOT EXISTS done BOOLEAN NOT NULL DEFAULT false`;
+  } catch (err) {
+    resetDb(); // Clear stale connection so next request retries fresh
+    throw err;
+  }
 }
 
 // ── Items cache helpers ──────────────────────────────────────────────────────
