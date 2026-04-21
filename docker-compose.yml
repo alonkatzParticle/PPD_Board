@@ -6,6 +6,7 @@ services:
       args:
         MONDAY_API_KEY: ${MONDAY_API_KEY}
         MONDAY_API_URL: ${MONDAY_API_URL:-https://api.monday.com/v2}
+        DATABASE_URL: ${DATABASE_URL}
     image: ppd-dashboard:latest
     container_name: ppd-dashboard
     ports:
