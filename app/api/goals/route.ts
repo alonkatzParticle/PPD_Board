@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb, ensureSchema } from "@/lib/db";
 import type { BoardType } from "@/lib/types";
 
+export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   const boardType = req.nextUrl.searchParams.get("boardType") as BoardType;
   const weekKey   = req.nextUrl.searchParams.get("weekKey");

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { mondayQuery, GET_GROUPS_QUERY, GET_COLUMNS_QUERY } from "@/lib/monday";
 import { detectColumnMapping } from "@/lib/utils";
 
+export const dynamic = 'force-dynamic';
+
 interface GroupsResponse {
   boards: {
     id: string;

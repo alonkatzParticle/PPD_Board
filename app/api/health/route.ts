@@ -1,31 +1,44 @@
-export async function GET() {
-  const rawUrl = process.env.DATABASE_URL;
+import { NextResponse } from "next/server";
+import { hasDb, getDb, ensureSchema } from "@/lib/db";
 
-  const result: any = {
-    rawUrl: rawUrl,
-    rawUrlLength: rawUrl?.length,
-    rawUrlCharCodes: rawUrl ? Array.from(rawUrl).map(c => c.charCodeAt(0)) : null,
-    rawUrlJSON: JSON.stringify(rawUrl),
+export const dynamic = 'force-dynamic';
+
+export async function GET() {
+  const envDiag = {
+    DATABASE_URL: process.env['DATABASE_URL'] ? "set" : "missing",
+    NODE_ENV: process.env['NODE_ENV'],
   };
 
-  try {
-    const { Pool } = await import('pg');
-    const pool = new Pool({ connectionString: rawUrl });
-    const r = await pool.query('SELECT 1 as ok');
-    result.queryOk = r.rows;
-    await pool.end();
-  } catch (e: any) {
-    result.error = {
-      message: e?.message,
-      code: e?.code,
-      errno: e?.errno,
-      syscall: e?.syscall,
-      hostname: e?.hostname,
-      stack: e?.stack?.split('\n').slice(0, 10),
-      name: e?.name,
-      cause: e?.cause ? { message: e.cause.message, code: e.cause.code, hostname: e.cause.hostname } : null,
-    };
+  const status: Record<string, unknown> = {
+    db: "not configured",
+    itemsCache: null,
+    goalsTable: null,
+    envDiag,
+  };
+
+  if (!hasDb()) {
+    return NextResponse.json({ ok: false, ...status });
   }
 
-  return Response.json(result);
+  try {
+    await ensureSchema();
+    const sql = getDb();
+
+    const itemRows = await sql`SELECT board_id, mode, fetched_at FROM items_cache` as {
+      board_id: string; mode: string; fetched_at: Date;
+    }[];
+    status.db = "connected";
+    status.itemsCache = itemRows.map((r) => ({
+      board: r.board_id,
+      mode: r.mode,
+      age: `${Math.round((Date.now() - new Date(r.fetched_at).getTime()) / 60000)} min ago`,
+    }));
+
+    const goalRows = await sql`SELECT COUNT(*) as count FROM week_goals` as { count: number }[];
+    status.goalsTable = `${goalRows[0]?.count ?? 0} goal entries`;
+
+    return NextResponse.json({ ok: true, ...status });
+  } catch (err) {
+    return NextResponse.json({ ok: false, db: "error", error: String(err) });
+  }
 }

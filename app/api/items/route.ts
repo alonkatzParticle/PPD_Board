@@ -3,6 +3,9 @@ import {
   getBoardMetadata, fetchBoardCached, buildWeekData,
   BOARD_ITEM_TTL,
 } from "@/lib/items-server";
+
+export const dynamic = 'force-dynamic';
+
 import { normalizeMondayItem, buildProductSummary } from "@/lib/utils";
 import type { BoardType, ItemsMode } from "@/lib/types";
 

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { mondayQuery } from "@/lib/monday";
 import { BOARD_IDS, BOARD_NAMES } from "@/lib/types";
 
+export const dynamic = 'force-dynamic';
+
 const VERIFY_BOARDS_QUERY = `
   query VerifyBoards($videoId: ID!, $designId: ID!) {
     video: boards(ids: [$videoId]) { id name }

@@ -3,6 +3,8 @@ import { mondayQuery } from "@/lib/monday";
 import { detectColumnMapping } from "@/lib/utils";
 import type { BoardType } from "@/lib/types";
 
+export const dynamic = 'force-dynamic';
+
 // This endpoint is called by Vercel Cron every 5 minutes.
 // It pre-warms the server-side item cache for both boards so that
 // the first real user request is served instantly from cache.
