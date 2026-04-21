@@ -16,7 +16,7 @@ function isNeonUrl(url: string): boolean {
 }
 
 export function hasDb(): boolean {
-  return !!process.env.DATABASE_URL;
+  return !!process.env['DATABASE_URL'];
 }
 
 // Wrap a pg Pool into a tagged-template function matching the neon interface
@@ -38,7 +38,7 @@ function makePoolSql(pool: Pool): SqlFn {
 }
 
 export function getDb(): SqlFn {
-  const url = process.env.DATABASE_URL;
+  const url = process.env['DATABASE_URL'];
   if (!url) throw new Error("DATABASE_URL is not set");
 
   if (url.includes("neon.tech")) {
