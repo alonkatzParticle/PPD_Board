@@ -17,7 +17,7 @@ ENV MONDAY_API_URL=$MONDAY_API_URL
 
 # Dummy placeholder so Next.js SWC does NOT inline process.env.DATABASE_URL as undefined.
 # The real value is injected at container start via docker-compose environment block.
-ENV DATABASE_URL=postgresql://placeholder:placeholder@placeholder:5432/placeholder
+ENV DATABASE_URL=postgresql://appuser:apppass@db:5432/mydb
 
 RUN npm run build
 
