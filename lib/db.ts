@@ -1,24 +1,40 @@
-import { neon } from "@neondatabase/serverless";
-import postgres from "postgres";
+import { neon, NeonQueryFunction } from "@neondatabase/serverless";
+import { Pool } from "pg";
 import type { MondayItem, ColumnMapping, BoardType, PlannedTask } from "./types";
 
 // ── Driver selection ──────────────────────────────────────────────────────────
 // Neon serverless only works over HTTP to Neon's cloud API.
-// For a standard local/VPS Postgres container we use the `postgres` TCP driver.
+// For a standard local/VPS Postgres container we use node-postgres (pg).
 
 type SqlFn = (strings: TemplateStringsArray, ...values: unknown[]) => Promise<unknown[]>;
 
-let _neonSql: ReturnType<typeof neon> | null = null;
-let _pgSql: ReturnType<typeof postgres> | null = null;
+let _neonSql: NeonQueryFunction<false, false> | null = null;
+let _pgPool: Pool | null = null;
 
 function isNeonUrl(url: string): boolean {
   return url.includes("neon.tech");
 }
 
 export function hasDb(): boolean {
-  // Use bracket notation to prevent Next.js from statically replacing
-  // process.env.VAR at build time (which bakes in 'undefined' when no .env exists)
   return !!(process.env['DATABASE_URL'] || process.env['POSTGRES_DATABASE_URL']);
+}
+
+// Wrap a pg Pool into a tagged-template function matching the neon interface
+function makePoolSql(pool: Pool): SqlFn {
+  return async (strings: TemplateStringsArray, ...values: unknown[]) => {
+    const parts = strings.raw;
+    let text = "";
+    const params: unknown[] = [];
+    for (let i = 0; i < parts.length; i++) {
+      text += parts[i];
+      if (i < values.length) {
+        params.push(values[i]);
+        text += `$${params.length}`;
+      }
+    }
+    const result = await pool.query(text, params);
+    return result.rows;
+  };
 }
 
 export function getDb(): SqlFn {
@@ -29,21 +45,15 @@ export function getDb(): SqlFn {
     if (!_neonSql) _neonSql = neon(url);
     return _neonSql as unknown as SqlFn;
   } else {
-    // VPS / local Docker — reset on error so stale connections are not reused
-    if (!_pgSql) {
-      _pgSql = postgres(url, {
-        ssl: false,
-        max: 5,
-        connect_timeout: 10,
-        onnotice: () => {},
-      });
+    if (!_pgPool) {
+      _pgPool = new Pool({ connectionString: url, ssl: false, max: 5 });
     }
-    return _pgSql as unknown as SqlFn;
+    return makePoolSql(_pgPool);
   }
 }
 
 export function resetDb() {
-  _pgSql = null;
+  if (_pgPool) { _pgPool.end().catch(() => {}); _pgPool = null; }
   _neonSql = null;
 }
 
