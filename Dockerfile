@@ -10,12 +10,11 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Only bake env vars needed at Next.js build time (not DATABASE_URL)
 ARG MONDAY_API_KEY
 ARG MONDAY_API_URL=https://api.monday.com/v2
-ARG DATABASE_URL
 ENV MONDAY_API_KEY=$MONDAY_API_KEY
 ENV MONDAY_API_URL=$MONDAY_API_URL
-ENV DATABASE_URL=$DATABASE_URL
 
 RUN npm run build
 
@@ -26,8 +25,6 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Copy everything needed for next start
-# (public folder omitted because it is empty in the repository)
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json

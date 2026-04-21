@@ -16,7 +16,7 @@ function isNeonUrl(url: string): boolean {
 }
 
 export function hasDb(): boolean {
-  return !!(process.env['DATABASE_URL'] || process.env['POSTGRES_DATABASE_URL']);
+  return !!process.env.DATABASE_URL;
 }
 
 // Wrap a pg Pool into a tagged-template function matching the neon interface
@@ -38,13 +38,15 @@ function makePoolSql(pool: Pool): SqlFn {
 }
 
 export function getDb(): SqlFn {
-  const url = process.env['DATABASE_URL'] || process.env['POSTGRES_DATABASE_URL'];
-  if (!url) throw new Error("DATABASE_URL or POSTGRES_DATABASE_URL environment variable is not set");
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error("DATABASE_URL is not set");
 
-  if (isNeonUrl(url)) {
+  if (url.includes("neon.tech")) {
+    // Vercel / Neon cloud — use HTTP driver
     if (!_neonSql) _neonSql = neon(url);
     return _neonSql as unknown as SqlFn;
   } else {
+    // VPS / local Docker — use pg Pool
     if (!_pgPool) {
       _pgPool = new Pool({ connectionString: url, ssl: false, max: 5 });
     }
