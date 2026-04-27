@@ -213,6 +213,11 @@ export function normalizeMondayItem(
   const typeCol = getCol(columnMapping.type);
   const type = typeCol?.text?.trim() ?? "—";
 
+  // Exclude video tasks of type "upload b rolls" everywhere on the site
+  if (boardType === "video" && type.toLowerCase() === "upload b rolls") {
+    return null;
+  }
+
   return {
     id: item.id,
     name: item.name,
