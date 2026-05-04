@@ -106,6 +106,17 @@ export async function ensureSchema() {
 
   // Add done column to existing tables (safe to run repeatedly)
   await sql`ALTER TABLE planned_tasks ADD COLUMN IF NOT EXISTS done BOOLEAN NOT NULL DEFAULT false`;
+
+  // Week notes — per board+week free-text notes
+  await sql`
+    CREATE TABLE IF NOT EXISTS week_notes (
+      board_type  TEXT        NOT NULL,
+      week_key    TEXT        NOT NULL,
+      content     TEXT        NOT NULL DEFAULT '',
+      updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (board_type, week_key)
+    )
+  `;
   } catch (err) {
     resetDb(); // Clear stale connection so next request retries fresh
     throw err;
@@ -248,6 +259,41 @@ export async function updatePlannedTask(
 export async function deletePlannedTask(id: string): Promise<void> {
   const sql = getDb();
   await sql`DELETE FROM planned_tasks WHERE id = ${id}`;
+}
+
+// ── Week Notes ───────────────────────────────────────────────────────────────
+
+export async function getWeekNote(
+  boardType: string,
+  weekKey: string
+): Promise<string> {
+  if (!hasDb()) return "";
+  try {
+    await ensureSchema();
+    const sql = getDb();
+    const rows = await sql`
+      SELECT content FROM week_notes
+      WHERE board_type = ${boardType} AND week_key = ${weekKey}
+      LIMIT 1
+    ` as { content: string }[];
+    return rows[0]?.content ?? "";
+  } catch {
+    return "";
+  }
+}
+
+export async function setWeekNote(
+  boardType: string,
+  weekKey: string,
+  content: string
+): Promise<void> {
+  const sql = getDb();
+  await sql`
+    INSERT INTO week_notes (board_type, week_key, content, updated_at)
+    VALUES (${boardType}, ${weekKey}, ${content}, now())
+    ON CONFLICT (board_type, week_key)
+    DO UPDATE SET content = ${content}, updated_at = now()
+  `;
 }
 
 // ── Goals ─────────────────────────────────────────────────────────────────────

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   RefreshCw, AlertTriangle, CalendarDays, ClipboardList, Package, ShoppingBag, Target, Pencil,
+  ChevronLeft, ChevronRight, FileText, ChevronDown,
 } from "lucide-react";
 import type { BoardType, DashboardItem, ProductSummary, PlannedTask } from "@/lib/types";
 import { BOARD_IDS } from "@/lib/types";
@@ -37,6 +38,8 @@ interface PlanningClientProps {
   initialAllWeeksData: AllWeeksData | null;
   initialPlannedTasks: PlannedTask[];
   initialGoals: WeekGoals;
+  initialNote: string;
+  initialWeekKey: string;
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -46,6 +49,8 @@ export function PlanningClient({
   initialAllWeeksData,
   initialPlannedTasks,
   initialGoals,
+  initialNote,
+  initialWeekKey,
 }: PlanningClientProps) {
   const [activeBoard, setActiveBoard]     = useState<BoardType>(initialBoard);
   const [allWeeksData, setAllWeeksData]   = useState<AllWeeksData | null>(initialAllWeeksData);
@@ -59,19 +64,26 @@ export function PlanningClient({
   const [lastRefresh, setLastRefresh]     = useState<Date | null>(null);
   const [isRefreshing, setIsRefreshing]   = useState(false);
 
+  // Week navigation — default offset 1 = next week (matches SSR)
+  const [weekOffset, setWeekOffset]       = useState(1);
+
+  // Notes
+  const [note, setNote]                   = useState(initialNote);
+  const [noteSaving, setNoteSaving]       = useState<"idle" | "saving" | "saved">("idle");
+  const noteSaveTimer                     = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Track whether we've served the SSR data for the initial board yet
   const itemsLoadSkipped  = useRef(!!initialAllWeeksData);
   const tasksLoadSkipped  = useRef(true); // always skip on mount — SSR provides initial tasks
   const initialBoardRef   = useRef(initialBoard);
+  const initialWeekKeyRef = useRef(initialWeekKey);
 
-  const weekWindow = getWeekWindow(1);
+  const weekWindow = getWeekWindow(weekOffset);
   const weekKey    = toWeekKey(weekWindow.start);
 
   // ── Goals ──────────────────────────────────────────────────────────────────
-  // For the initial board: use SSR-provided goals (skip stale localStorage read).
-  // For board switches: read localStorage first (instant), then hydrate from server.
   useEffect(() => {
-    if (activeBoard !== initialBoardRef.current) {
+    if (activeBoard !== initialBoardRef.current || weekKey !== initialWeekKeyRef.current) {
       setGoals(getWeekGoals(activeBoard, weekKey));
     }
     fetchWeekGoals(activeBoard, weekKey).then(setGoals);
@@ -111,7 +123,7 @@ export function PlanningClient({
     }
   }, [activeBoard]);
 
-  // Skip the initial load if SSR provided data; always run on board switch.
+  // Skip the initial load if SSR provided data; always run on board/week switch.
   useEffect(() => {
     if (itemsLoadSkipped.current) {
       itemsLoadSkipped.current = false;
@@ -133,7 +145,7 @@ export function PlanningClient({
     }
   }, [activeBoard, weekKey]);
 
-  // Skip on mount (SSR provided tasks); re-run on board switch.
+  // Skip on mount (SSR provided tasks); re-run on board/week switch.
   useEffect(() => {
     if (tasksLoadSkipped.current) {
       tasksLoadSkipped.current = false;
@@ -141,6 +153,40 @@ export function PlanningClient({
     }
     loadPlannedTasks();
   }, [loadPlannedTasks]);
+
+  // ── Load note when week/board changes ──────────────────────────────────────
+  useEffect(() => {
+    // Skip on initial mount — SSR already provided the note
+    if (weekKey === initialWeekKeyRef.current && activeBoard === initialBoardRef.current) return;
+    fetch(`/api/notes?boardType=${activeBoard}&weekKey=${weekKey}`)
+      .then((r) => r.json())
+      .then((d) => setNote(d.content ?? ""))
+      .catch(() => setNote(""));
+  }, [activeBoard, weekKey]);
+
+  // ── Debounced note autosave ─────────────────────────────────────────────────
+  const saveNote = useCallback((content: string, board: string, wk: string) => {
+    if (noteSaveTimer.current) clearTimeout(noteSaveTimer.current);
+    setNoteSaving("saving");
+    noteSaveTimer.current = setTimeout(async () => {
+      try {
+        await fetch("/api/notes", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ boardType: board, weekKey: wk, content }),
+        });
+        setNoteSaving("saved");
+        setTimeout(() => setNoteSaving("idle"), 1500);
+      } catch {
+        setNoteSaving("idle");
+      }
+    }, 1000);
+  }, []);
+
+  const handleNoteChange = useCallback((content: string) => {
+    setNote(content);
+    saveNote(content, activeBoard, weekKey);
+  }, [activeBoard, weekKey, saveNote]);
 
   // ── Auto-refresh every 1 min during Israeli working hours (8am–6pm local) ──
   useEffect(() => {
@@ -153,6 +199,14 @@ export function PlanningClient({
     }, 60 * 1000);
     return () => clearInterval(interval);
   }, [loadAllWeeks, loadPlannedTasks]);
+
+  // ── Week navigation ────────────────────────────────────────────────────────
+  const handleWeekChange = (delta: number) => {
+    setWeekOffset((prev) => prev + delta);
+    setSelectedProduct(null);
+    setAllWeeksData(null);
+    setPlannedTasks([]);
+  };
 
   // ── Board switch ───────────────────────────────────────────────────────────
   const handleBoardSwitch = (board: BoardType) => {
@@ -313,10 +367,29 @@ export function PlanningClient({
         <div className="flex flex-wrap items-center gap-3 mb-6">
           <BoardToggle active={activeBoard} onChange={handleBoardSwitch} loading={isInitialLoading} />
 
-          <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-violet-600/10 border border-violet-500/20">
-            <CalendarDays className="w-4 h-4 text-violet-400" />
-            <span className="text-sm font-semibold text-violet-200">Next Week</span>
-            <span className="text-xs text-violet-400/70 hidden sm:inline">{weekWindow.label}</span>
+          {/* Week navigator */}
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => handleWeekChange(-1)}
+              className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-all"
+              title="Previous week"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-violet-600/10 border border-violet-500/20">
+              <CalendarDays className="w-4 h-4 text-violet-400" />
+              <span className="text-sm font-semibold text-violet-200">
+                {weekOffset === 1 ? "Next Week" : weekOffset === 0 ? "This Week" : weekOffset > 1 ? `+${weekOffset} weeks` : `${weekOffset} weeks`}
+              </span>
+              <span className="text-xs text-violet-400/70 hidden sm:inline">{weekWindow.label}</span>
+            </div>
+            <button
+              onClick={() => handleWeekChange(1)}
+              className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-all"
+              title="Next week"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
 
           <div className="ml-auto flex items-center gap-3">
@@ -364,6 +437,13 @@ export function PlanningClient({
             onSetTotal={onSetTotalGoal}
           />
         )}
+
+        {/* Notes section */}
+        <NotesSection
+          note={note}
+          saving={noteSaving}
+          onChange={handleNoteChange}
+        />
 
         {/* ── Main two-column layout ───────────────────────────────────────── */}
         <div className="flex gap-5 items-start">
@@ -803,6 +883,67 @@ function ProductCard({
           </button>
         )}
       </div>
+    </div>
+  );
+}
+
+// ── Notes Section ─────────────────────────────────────────────────────────────
+
+function NotesSection({
+  note,
+  saving,
+  onChange,
+}: {
+  note: string;
+  saving: "idle" | "saving" | "saved";
+  onChange: (content: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (open) setTimeout(() => textareaRef.current?.focus(), 50);
+  }, [open]);
+
+  return (
+    <div className="mb-5 rounded-xl border border-zinc-800 bg-zinc-900/40 overflow-hidden">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800/40 transition-colors text-left"
+      >
+        <FileText className="w-3.5 h-3.5 text-zinc-500 flex-shrink-0" />
+        <span className="text-xs font-semibold text-zinc-400 flex-1">Week Notes</span>
+        {!open && note && (
+          <span className="text-xs text-zinc-600 truncate max-w-[40%] hidden sm:block">
+            {note.split("\n")[0]}
+          </span>
+        )}
+        {saving === "saving" && (
+          <span className="text-[10px] text-zinc-600 flex-shrink-0">Saving…</span>
+        )}
+        {saving === "saved" && (
+          <span className="text-[10px] text-emerald-500 flex-shrink-0">Saved ✓</span>
+        )}
+        <ChevronDown
+          className={cn(
+            "w-3.5 h-3.5 text-zinc-600 transition-transform duration-200 flex-shrink-0",
+            open && "rotate-180"
+          )}
+        />
+      </button>
+
+      {open && (
+        <div className="px-4 pb-4 pt-1">
+          <textarea
+            ref={textareaRef}
+            value={note}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder="Add notes for this week…"
+            rows={5}
+            className="w-full resize-y rounded-lg bg-zinc-800/60 border border-zinc-700/60 text-sm text-zinc-200 placeholder-zinc-600 px-3 py-2.5 focus:outline-none focus:border-violet-500/60 focus:bg-zinc-800 transition-colors leading-relaxed"
+          />
+        </div>
+      )}
     </div>
   );
 }

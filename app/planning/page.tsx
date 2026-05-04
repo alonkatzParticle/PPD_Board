@@ -5,7 +5,7 @@ import { BOARD_IDS } from "@/lib/types";
 import { toWeekKey } from "@/lib/targets";
 import { getWeekWindow } from "@/lib/utils";
 import { getAllWeeksData } from "@/lib/items-server";
-import { hasDb, getPlannedTasks, getWeekGoalsFromDb } from "@/lib/db";
+import { hasDb, getPlannedTasks, getWeekGoalsFromDb, getWeekNote } from "@/lib/db";
 import { PlanningClient } from "./PlanningClient";
 
 export default async function PlanningPage() {
@@ -14,10 +14,11 @@ export default async function PlanningPage() {
   const weekKey      = toWeekKey(weekWindow.start);
   const boardId      = BOARD_IDS[defaultBoard];
 
-  const [allWeeksData, plannedTasks, goals] = await Promise.all([
+  const [allWeeksData, plannedTasks, goals, initialNote] = await Promise.all([
     getAllWeeksData(boardId, defaultBoard).catch(() => null),
     hasDb() ? getPlannedTasks(defaultBoard, weekKey).catch(() => []) : Promise.resolve([]),
     getWeekGoalsFromDb(defaultBoard, weekKey),
+    getWeekNote(defaultBoard, weekKey),
   ]);
 
   return (
@@ -26,6 +27,8 @@ export default async function PlanningPage() {
       initialAllWeeksData={allWeeksData}
       initialPlannedTasks={plannedTasks}
       initialGoals={goals}
+      initialNote={initialNote}
+      initialWeekKey={weekKey}
     />
   );
 }
