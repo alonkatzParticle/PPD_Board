@@ -89,21 +89,14 @@ export function getPipelineTasks(
     .map((item) => ({ ...item, isPipeline: true }));
 }
 
-/** Monday.com status colors that represent a "done" / completed state.
- *  #00c875 = standard Monday green "Done"
- *  #9cd326 = lime green (sometimes used for done/approved)
+/** Group title keywords that indicate a task has been completed.
+ *  Monday.com boards typically have a "Completed" group where done work lives.
  */
-const DONE_COLORS = new Set(["#00c875", "#9cd326"]);
+const COMPLETED_GROUP_KEYWORDS = ["complet", "done", "finished", "archived"];
 
-/** Keyword fallback for boards with non-standard colors */
-const DONE_KEYWORDS = ["done", "delivered", "complet", "approved", "published", "aired", "posted", "went live", "finished"];
-
-export function isDoneStatus(status: string, statusColor?: string): boolean {
-  // Primary: color-based (Monday's standard Done colors — most reliable)
-  if (statusColor && DONE_COLORS.has(statusColor.toLowerCase())) return true;
-  // Fallback: keyword match on label
-  const lower = status.toLowerCase();
-  return DONE_KEYWORDS.some((kw) => lower.includes(kw));
+export function isCompletedGroup(groupTitle: string): boolean {
+  const lower = groupTitle.toLowerCase();
+  return COMPLETED_GROUP_KEYWORDS.some((kw) => lower.includes(kw));
 }
 
 export function cn(...inputs: ClassValue[]) {
