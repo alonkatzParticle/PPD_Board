@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import type { BoardType, DashboardItem, ProductSummary, PlannedTask } from "@/lib/types";
 import { BOARD_IDS } from "@/lib/types";
-import { getWeekWindow, cn, isCompletedGroup } from "@/lib/utils";
+import { getWeekWindow, cn, isCompletedItem } from "@/lib/utils";
 import { toWeekKey, fetchWeekGoals, getWeekGoals, setProductTarget, setTotalTarget, type WeekGoals } from "@/lib/targets";
 import { getCached, setCached, bustCacheByPrefix } from "@/lib/clientCache";
 import { BoardToggle } from "@/components/BoardToggle";
@@ -313,7 +313,7 @@ export function PlanningClient({
         entry.pipelineCount++;
       } else {
         entry.mondayCount++;
-        if (isCompletedGroup(item.groupTitle)) entry.completedCount++;
+        if (isCompletedItem(item.status, item.groupTitle)) entry.completedCount++;
       }
       map.set(item.product, entry);
     }

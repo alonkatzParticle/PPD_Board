@@ -19,6 +19,7 @@ import {
 import type {
   BoardType, MondayItem, ColumnMapping, ItemsMode, DashboardItem, ProductSummary,
 } from "./types";
+import { MARKETING_DEPARTMENTS } from "./types";
 
 // ── Exported types ────────────────────────────────────────────────────────────
 
@@ -289,7 +290,18 @@ export function buildWeekData(
   if (offset === 1) {
     const scheduledIds = new Set(filtered.map((i) => i.id));
     const pipeline = getPipelineTasks(intakeNormalized, weekWindow, scheduledIds);
-    filtered = [...filtered, ...pipeline];
+
+    // Also include intake-group items (Designer Pending, Video Editor Pending, etc.)
+    // that have a CONCRETE timeline scheduled for this week. getPipelineTasks only
+    // returns items with NO timeline or a beyond-next-week timeline, so these
+    // items would otherwise be silently dropped.
+    const alreadyIncluded = new Set([...filtered.map((i) => i.id), ...pipeline.map((i) => i.id)]);
+    const pendingWithTimeline = filterByWeekWindow(
+      intakeNormalized.filter((i) => MARKETING_DEPARTMENTS.includes(i.department)),
+      weekWindow
+    ).filter((i) => !alreadyIncluded.has(i.id));
+
+    filtered = [...filtered, ...pipeline, ...pendingWithTimeline];
   }
 
   const allFiltered = filterByWeekWindow(allDeptsNormalized, weekWindow);

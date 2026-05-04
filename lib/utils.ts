@@ -89,17 +89,12 @@ export function getPipelineTasks(
     .map((item) => ({ ...item, isPipeline: true }));
 }
 
-/** Exact group titles (lowercase) that represent completed work.
- *  Based on the actual Monday board groups:
- *  - Design board: "Completed"
- *  - Video board:  "Completed"
- *  Note: "Upload Complete" (Video board) is intentionally excluded — it's a
- *  mid-workflow step, not the final delivery group.
+/** A task is "completed" if its status column text is "Completed" (set by the team)
+ *  OR if it lives in the "Completed" group — whichever signal is present.
+ *  Both boards use the same convention.
  */
-const COMPLETED_GROUP_TITLES = new Set(["completed"]);
-
-export function isCompletedGroup(groupTitle: string): boolean {
-  return COMPLETED_GROUP_TITLES.has(groupTitle.toLowerCase());
+export function isCompletedItem(status: string, groupTitle: string): boolean {
+  return status.toLowerCase() === "completed" || groupTitle.toLowerCase() === "completed";
 }
 
 export function cn(...inputs: ClassValue[]) {
