@@ -66,6 +66,9 @@ export function PlanningClient({
 
   // Week navigation — default offset 1 = next week (matches SSR)
   const [weekOffset, setWeekOffset]       = useState(1);
+  // For offsets < -1 (beyond lastWeek), fetch a specific week's data
+  const [pastWeekData, setPastWeekData]   = useState<import("@/lib/items-server").WeekData | null>(null);
+  const [loadingPast, setLoadingPast]     = useState(false);
 
   // Notes
   const [note, setNote]                   = useState(initialNote);
@@ -188,6 +191,24 @@ export function PlanningClient({
     saveNote(content, activeBoard, weekKey);
   }, [activeBoard, weekKey, saveNote]);
 
+  // ── Fetch arbitrary past weeks (offset < -1) ──────────────────────────────
+  useEffect(() => {
+    if (weekOffset >= -1) {
+      setPastWeekData(null);
+      return;
+    }
+    setLoadingPast(true);
+    const url = new URL("/api/items", window.location.origin);
+    url.searchParams.set("boardId", BOARD_IDS[activeBoard]);
+    url.searchParams.set("boardType", activeBoard);
+    url.searchParams.set("weekOffset", String(weekOffset));
+    fetch(url.toString())
+      .then((r) => r.json())
+      .then((data) => setPastWeekData(data))
+      .catch(() => setPastWeekData(null))
+      .finally(() => setLoadingPast(false));
+  }, [activeBoard, weekOffset]);
+
   // ── Auto-refresh every 1 min during Israeli working hours (8am–6pm local) ──
   useEffect(() => {
     const interval = setInterval(() => {
@@ -274,12 +295,15 @@ export function PlanningClient({
   }, [activeBoard, weekKey]);
 
   // ── Derived data ────────────────────────────────────────────────────────────
-  const isInitialLoading = loadingItems && !allWeeksData;
+  const isInitialLoading = (loadingItems && !allWeeksData) || loadingPast;
+  const isPastWeek = weekOffset <= 0;
+
   // Map weekOffset → the correct AllWeeksData slice (server provides -1, 0, +1)
   const nextWeekData =
-    weekOffset === -1 ? (allWeeksData?.lastWeek ?? null)
-    : weekOffset === 0 ? (allWeeksData?.thisWeek ?? null)
-    : (allWeeksData?.nextWeek ?? null); // +1 and beyond default to nextWeek
+    weekOffset < -1  ? pastWeekData
+    : weekOffset === -1 ? (allWeeksData?.lastWeek ?? null)
+    : weekOffset === 0  ? (allWeeksData?.thisWeek ?? null)
+    : (allWeeksData?.nextWeek ?? null);
 
   const productStatsMap = useMemo(() => {
     const map = new Map<string, { mondayCount: number; pipelineCount: number }>();
@@ -379,13 +403,7 @@ export function PlanningClient({
           <div className="flex items-center gap-1">
             <button
               onClick={() => handleWeekChange(-1)}
-              disabled={weekOffset <= -1}
-              className={cn(
-                "p-1.5 rounded-lg transition-all",
-                weekOffset <= -1
-                  ? "text-zinc-700 cursor-not-allowed"
-                  : "text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800"
-              )}
+              className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-all"
               title="Previous week"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -393,7 +411,7 @@ export function PlanningClient({
             <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-violet-600/10 border border-violet-500/20">
               <CalendarDays className="w-4 h-4 text-violet-400" />
               <span className="text-sm font-semibold text-violet-200">
-                {weekOffset === 1 ? "Next Week" : weekOffset === 0 ? "This Week" : "Last Week"}
+                {weekOffset === 1 ? "Next Week" : weekOffset === 0 ? "This Week" : weekOffset === -1 ? "Last Week" : `${Math.abs(weekOffset)} weeks ago`}
               </span>
               <span className="text-xs text-violet-400/70 hidden sm:inline">{weekWindow.label}</span>
             </div>
@@ -456,6 +474,7 @@ export function PlanningClient({
             totalGoal={goalsBarData.totalGoal}
             totalTarget={goals.totalTarget}
             onSetTotal={onSetTotalGoal}
+            isPast={isPastWeek}
           />
         )}
 
@@ -596,13 +615,14 @@ interface GoalsBarItem {
 }
 
 function PlanningGoalBar({
-  data, totalActual, totalGoal, totalTarget, onSetTotal,
+  data, totalActual, totalGoal, totalTarget, onSetTotal, isPast = false,
 }: {
   data: GoalsBarItem[];
   totalActual: number;
   totalGoal: number;
   totalTarget: number | null;
   onSetTotal: (v: number | null) => void;
+  isPast?: boolean;
 }) {
   const [editingTotal, setEditingTotal] = useState(false);
   const [totalDraft, setTotalDraft]     = useState("");
@@ -612,7 +632,9 @@ function PlanningGoalBar({
   if (!data.length && !totalTarget) return null;
 
   const pct = effectiveTotal > 0 ? totalActual / effectiveTotal : 0;
-  const statusText  = pct >= 1 ? "All goals met ✓" : `${Math.max(0, effectiveTotal - totalActual)} more tasks needed`;
+  const statusText = isPast
+    ? (pct >= 1 ? "Goal met ✓" : `Missed goal by ${Math.max(0, effectiveTotal - totalActual)}`)
+    : (pct >= 1 ? "All goals met ✓" : `${Math.max(0, effectiveTotal - totalActual)} more tasks needed`);
   const statusColor = pct >= 1 ? "text-emerald-400" : pct >= 0.6 ? "text-amber-400" : "text-red-400";
 
   const openEdit = () => {
@@ -632,7 +654,9 @@ function PlanningGoalBar({
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <Target className="w-4 h-4 text-violet-400 flex-shrink-0" />
-          <span className="text-sm font-semibold text-zinc-200">Next Week Task Goal</span>
+          <span className="text-sm font-semibold text-zinc-200">
+            {isPast ? "Week Results" : "Next Week Task Goal"}
+          </span>
           {effectiveTotal > 0 && (
             <span className={cn("text-sm font-bold ml-1", statusColor)}>
               {totalActual} / {effectiveTotal}
@@ -642,31 +666,34 @@ function PlanningGoalBar({
             <p className={cn("text-xs font-semibold hidden sm:block", statusColor)}>{statusText}</p>
           )}
         </div>
-        {editingTotal ? (
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            <input
-              ref={totalInputRef}
-              type="number"
-              min={1}
-              value={totalDraft}
-              placeholder="e.g. 30"
-              onChange={(e) => setTotalDraft(e.target.value)}
-              onBlur={commitEdit}
-              onKeyDown={(e) => { if (e.key === "Enter") commitEdit(); if (e.key === "Escape") setEditingTotal(false); }}
-              className="w-20 px-2 py-1 text-sm rounded-lg bg-zinc-900 border border-zinc-600 text-zinc-100 focus:outline-none focus:border-violet-500 placeholder-zinc-600"
-            />
-            <button onClick={commitEdit} className="px-2.5 py-1 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-xs font-medium transition-colors">
-              Save
+        {/* Hide goal editing for past weeks */}
+        {!isPast && (
+          editingTotal ? (
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <input
+                ref={totalInputRef}
+                type="number"
+                min={1}
+                value={totalDraft}
+                placeholder="e.g. 30"
+                onChange={(e) => setTotalDraft(e.target.value)}
+                onBlur={commitEdit}
+                onKeyDown={(e) => { if (e.key === "Enter") commitEdit(); if (e.key === "Escape") setEditingTotal(false); }}
+                className="w-20 px-2 py-1 text-sm rounded-lg bg-zinc-900 border border-zinc-600 text-zinc-100 focus:outline-none focus:border-violet-500 placeholder-zinc-600"
+              />
+              <button onClick={commitEdit} className="px-2.5 py-1 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-xs font-medium transition-colors">
+                Save
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={openEdit}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-zinc-700 hover:border-zinc-500 text-xs text-zinc-500 hover:text-zinc-300 transition-all flex-shrink-0"
+            >
+              <Pencil className="w-3 h-3" />
+              {totalTarget !== null ? "Edit total" : "Set total"}
             </button>
-          </div>
-        ) : (
-          <button
-            onClick={openEdit}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-zinc-700 hover:border-zinc-500 text-xs text-zinc-500 hover:text-zinc-300 transition-all flex-shrink-0"
-          >
-            <Pencil className="w-3 h-3" />
-            {totalTarget !== null ? "Edit total" : "Set total"}
-          </button>
+          )
         )}
       </div>
 
