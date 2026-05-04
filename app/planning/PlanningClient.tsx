@@ -201,11 +201,15 @@ export function PlanningClient({
   }, [loadAllWeeks, loadPlannedTasks]);
 
   // ── Week navigation ────────────────────────────────────────────────────────
+  // NOTE: do NOT clear allWeeksData here — the server returns all 3 weeks
+  // (lastWeek/thisWeek/nextWeek) in a single payload. Changing weekOffset just
+  // reads a different slice of that data. Clearing it would leave it null
+  // forever since loadAllWeeks only depends on activeBoard, not weekOffset.
   const handleWeekChange = (delta: number) => {
     setWeekOffset((prev) => prev + delta);
     setSelectedProduct(null);
-    setAllWeeksData(null);
-    setPlannedTasks([]);
+    // plannedTasks will reload automatically: loadPlannedTasks depends on weekKey,
+    // which re-derives from weekOffset, causing the effect to re-run.
   };
 
   // ── Board switch ───────────────────────────────────────────────────────────
