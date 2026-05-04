@@ -89,6 +89,14 @@ export function getPipelineTasks(
     .map((item) => ({ ...item, isPipeline: true }));
 }
 
+/** Status labels that indicate a task was completed / delivered */
+const DONE_KEYWORDS = ["done", "delivered", "complet", "approved", "published", "aired", "posted", "went live", "finished"];
+
+export function isDoneStatus(status: string): boolean {
+  const lower = status.toLowerCase();
+  return DONE_KEYWORDS.some((kw) => lower.includes(kw));
+}
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }

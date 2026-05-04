@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import type { BoardType, DashboardItem, ProductSummary, PlannedTask } from "@/lib/types";
 import { BOARD_IDS } from "@/lib/types";
-import { getWeekWindow, cn } from "@/lib/utils";
+import { getWeekWindow, cn, isDoneStatus } from "@/lib/utils";
 import { toWeekKey, fetchWeekGoals, getWeekGoals, setProductTarget, setTotalTarget, type WeekGoals } from "@/lib/targets";
 import { getCached, setCached, bustCacheByPrefix } from "@/lib/clientCache";
 import { BoardToggle } from "@/components/BoardToggle";
@@ -306,10 +306,15 @@ export function PlanningClient({
     : (allWeeksData?.nextWeek ?? null);
 
   const productStatsMap = useMemo(() => {
-    const map = new Map<string, { mondayCount: number; pipelineCount: number }>();
+    const map = new Map<string, { mondayCount: number; pipelineCount: number; completedCount: number }>();
     for (const item of nextWeekData?.items ?? []) {
-      const entry = map.get(item.product) ?? { mondayCount: 0, pipelineCount: 0 };
-      if (item.isPipeline) entry.pipelineCount++; else entry.mondayCount++;
+      const entry = map.get(item.product) ?? { mondayCount: 0, pipelineCount: 0, completedCount: 0 };
+      if (item.isPipeline) {
+        entry.pipelineCount++;
+      } else {
+        entry.mondayCount++;
+        if (isDoneStatus(item.status)) entry.completedCount++;
+      }
       map.set(item.product, entry);
     }
     return map;
@@ -331,8 +336,11 @@ export function PlanningClient({
       .filter(([, goal]) => goal > 0)
       .map(([product, goal], idx) => {
         const stats = productStatsMap.get(product);
+        // For past weeks: actual = completed; for next week: actual = scheduled+pipeline
         const actual = Math.min(
-          (stats?.mondayCount ?? 0) + (stats?.pipelineCount ?? 0),
+          isPastWeek
+            ? (stats?.completedCount ?? 0)
+            : (stats?.mondayCount ?? 0) + (stats?.pipelineCount ?? 0),
           goal
         );
         return { product, actual, goal, color: SEGMENT_COLORS[idx % SEGMENT_COLORS.length] };
@@ -340,7 +348,7 @@ export function PlanningClient({
     const totalActual = data.reduce((s, d) => s + d.actual, 0);
     const totalGoal   = data.reduce((s, d) => s + d.goal, 0);
     return { data, totalActual, totalGoal };
-  }, [goals.products, productStatsMap]);
+  }, [goals.products, productStatsMap, isPastWeek]);
 
   const products = allProducts.filter((p) => !isBundle(p.product));
   const bundles  = allProducts.filter((p) =>  isBundle(p.product));
@@ -555,6 +563,7 @@ export function PlanningClient({
                     product={p.product}
                     mondayCount={productStatsMap.get(p.product)?.mondayCount ?? 0}
                     pipelineCount={productStatsMap.get(p.product)?.pipelineCount ?? 0}
+                    completedCount={productStatsMap.get(p.product)?.completedCount ?? 0}
                     plannedCount={plannedCountFor(p.product)}
                     goalTarget={goals.products[p.product] ?? null}
                     selected={selectedProduct === p.product}
@@ -563,6 +572,7 @@ export function PlanningClient({
                     )}
                     onSetGoal={(value) => onSetGoal(p.product, value)}
                     assignees={assigneesFor(p.product)}
+                    isPast={isPastWeek}
                   />
                 ))}
                 {displayList.length === 0 && (
@@ -775,31 +785,49 @@ function avatarColor(name: string): string {
 // ── Product card ───────────────────────────────────────────────────────────────
 
 function ProductCard({
-  product, mondayCount, pipelineCount, plannedCount, goalTarget, selected, onClick, onSetGoal, assignees,
+  product, mondayCount, pipelineCount, completedCount = 0, plannedCount, goalTarget, selected, onClick, onSetGoal, assignees, isPast = false,
 }: {
   product: string;
   mondayCount: number;
   pipelineCount: number;
+  completedCount?: number;
   plannedCount: number;
   goalTarget: number | null;
   selected: boolean;
   onClick: () => void;
   onSetGoal: (value: number | null) => void;
   assignees: string[];
+  isPast?: boolean;
 }) {
   const [editingGoal, setEditingGoal] = useState(false);
   const [goalDraft, setGoalDraft]     = useState("");
   const goalInputRef = useRef<HTMLInputElement>(null);
 
   const committed = mondayCount + pipelineCount;
-  const remaining  = goalTarget !== null ? Math.max(0, goalTarget - committed) : null;
-  const displayNum: number | string = remaining === null ? committed : remaining === 0 ? "Done" : remaining;
-  const numColor   = remaining === null
-    ? (selected ? "text-violet-400" : "text-zinc-400")
-    : remaining === 0   ? "text-emerald-400"
-    : remaining <= 3    ? "text-amber-400"
-    : "text-red-400";
-  const pct = goalTarget ? Math.min(committed / goalTarget, 1) : 0;
+
+  // Past weeks: compare completed vs goal; Future: compare scheduled vs goal
+  const activeCount = isPast ? completedCount : committed;
+  const remaining   = goalTarget !== null ? Math.max(0, goalTarget - activeCount) : null;
+
+  // Past week display: show "X done" if no goal, or remaining/done logic vs goal
+  // Next week display: show remaining tasks needed
+  const displayNum: number | string = isPast
+    ? (goalTarget !== null ? (completedCount >= goalTarget ? "✓" : completedCount) : completedCount)
+    : (remaining === null ? committed : remaining === 0 ? "Done" : remaining);
+
+  const numColor = isPast
+    ? (goalTarget === null
+        ? (selected ? "text-violet-400" : "text-zinc-400")
+        : completedCount >= goalTarget ? "text-emerald-400"
+        : completedCount >= goalTarget * 0.6 ? "text-amber-400"
+        : "text-red-400")
+    : (remaining === null
+        ? (selected ? "text-violet-400" : "text-zinc-400")
+        : remaining === 0   ? "text-emerald-400"
+        : remaining <= 3    ? "text-amber-400"
+        : "text-red-400");
+
+  const pct = goalTarget ? Math.min(activeCount / goalTarget, 1) : 0;
   const barColor = !goalTarget
     ? "bg-violet-500"
     : pct >= 1 ? "bg-emerald-500"
@@ -864,11 +892,14 @@ function ProductCard({
             <span className={cn("text-xl font-black leading-none tabular-nums", numColor)}>
               {displayNum}
             </span>
+            {isPast && committed > 0 && (
+              <span className="text-[9px] text-zinc-600 mt-0.5">{completedCount}/{committed} done</span>
+            )}
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[10px]">
-          {plannedCount > 0 && <><span className="text-zinc-700">·</span><span className="text-emerald-500">{plannedCount} planned</span></>}
+          {!isPast && plannedCount > 0 && <><span className="text-zinc-700">·</span><span className="text-emerald-500">{plannedCount} planned</span></>}
           {committed === 0 && plannedCount === 0 && (
             <span className="text-zinc-700">no tasks yet</span>
           )}
@@ -876,7 +907,8 @@ function ProductCard({
       </button>
 
       <div className="px-2.5 pb-2 pt-0" onClick={(e) => e.stopPropagation()}>
-        {editingGoal ? (
+        {/* Goal editing — only for next week */}
+        {!isPast && (editingGoal ? (
           <div className="flex items-center gap-1.5">
             <input
               ref={goalInputRef}
@@ -912,7 +944,7 @@ function ProductCard({
                 "text-[10px] font-medium",
                 pct >= 1 ? "text-emerald-400" : pct >= 0.5 ? "text-amber-400" : "text-red-400"
               )}>
-                {committed} / {goalTarget}
+                {activeCount} / {goalTarget}
               </p>
               <button
                 onClick={openGoalEdit}
@@ -929,6 +961,24 @@ function ProductCard({
           >
             + Set weekly goal
           </button>
+        ))}
+
+        {/* Past week: show progress bar read-only if goal was set */}
+        {isPast && goalTarget !== null && (
+          <div className="space-y-1">
+            <div className="h-1 rounded-full bg-zinc-800 overflow-hidden">
+              <div
+                className={cn("h-full rounded-full transition-all duration-500", barColor)}
+                style={{ width: `${pct * 100}%` }}
+              />
+            </div>
+            <p className={cn(
+              "text-[10px] font-medium",
+              pct >= 1 ? "text-emerald-400" : pct >= 0.5 ? "text-amber-400" : "text-red-400"
+            )}>
+              {completedCount} done / {goalTarget} goal
+            </p>
+          </div>
         )}
       </div>
     </div>
