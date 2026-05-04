@@ -271,7 +271,11 @@ export function PlanningClient({
 
   // ── Derived data ────────────────────────────────────────────────────────────
   const isInitialLoading = loadingItems && !allWeeksData;
-  const nextWeekData = allWeeksData?.nextWeek ?? null;
+  // Map weekOffset → the correct AllWeeksData slice (server provides -1, 0, +1)
+  const nextWeekData =
+    weekOffset === -1 ? (allWeeksData?.lastWeek ?? null)
+    : weekOffset === 0 ? (allWeeksData?.thisWeek ?? null)
+    : (allWeeksData?.nextWeek ?? null); // +1 and beyond default to nextWeek
 
   const productStatsMap = useMemo(() => {
     const map = new Map<string, { mondayCount: number; pipelineCount: number }>();
@@ -371,7 +375,13 @@ export function PlanningClient({
           <div className="flex items-center gap-1">
             <button
               onClick={() => handleWeekChange(-1)}
-              className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-all"
+              disabled={weekOffset <= -1}
+              className={cn(
+                "p-1.5 rounded-lg transition-all",
+                weekOffset <= -1
+                  ? "text-zinc-700 cursor-not-allowed"
+                  : "text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800"
+              )}
               title="Previous week"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -379,18 +389,25 @@ export function PlanningClient({
             <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-violet-600/10 border border-violet-500/20">
               <CalendarDays className="w-4 h-4 text-violet-400" />
               <span className="text-sm font-semibold text-violet-200">
-                {weekOffset === 1 ? "Next Week" : weekOffset === 0 ? "This Week" : weekOffset > 1 ? `+${weekOffset} weeks` : `${weekOffset} weeks`}
+                {weekOffset === 1 ? "Next Week" : weekOffset === 0 ? "This Week" : "Last Week"}
               </span>
               <span className="text-xs text-violet-400/70 hidden sm:inline">{weekWindow.label}</span>
             </div>
             <button
               onClick={() => handleWeekChange(1)}
-              className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-all"
+              disabled={weekOffset >= 1}
+              className={cn(
+                "p-1.5 rounded-lg transition-all",
+                weekOffset >= 1
+                  ? "text-zinc-700 cursor-not-allowed"
+                  : "text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800"
+              )}
               title="Next week"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
+
 
           <div className="ml-auto flex items-center gap-3">
             {lastRefresh && (
