@@ -89,14 +89,17 @@ export function getPipelineTasks(
     .map((item) => ({ ...item, isPipeline: true }));
 }
 
-/** Group title keywords that indicate a task has been completed.
- *  Monday.com boards typically have a "Completed" group where done work lives.
+/** Exact group titles (lowercase) that represent completed work.
+ *  Based on the actual Monday board groups:
+ *  - Design board: "Completed"
+ *  - Video board:  "Completed"
+ *  Note: "Upload Complete" (Video board) is intentionally excluded — it's a
+ *  mid-workflow step, not the final delivery group.
  */
-const COMPLETED_GROUP_KEYWORDS = ["complet", "done", "finished", "archived"];
+const COMPLETED_GROUP_TITLES = new Set(["completed"]);
 
 export function isCompletedGroup(groupTitle: string): boolean {
-  const lower = groupTitle.toLowerCase();
-  return COMPLETED_GROUP_KEYWORDS.some((kw) => lower.includes(kw));
+  return COMPLETED_GROUP_TITLES.has(groupTitle.toLowerCase());
 }
 
 export function cn(...inputs: ClassValue[]) {
