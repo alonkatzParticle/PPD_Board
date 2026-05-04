@@ -281,37 +281,25 @@ export function PlanningClient({
     : weekOffset === 0 ? (allWeeksData?.thisWeek ?? null)
     : (allWeeksData?.nextWeek ?? null); // +1 and beyond default to nextWeek
 
-  // Planning page shows only formally scheduled items (with a timeline).
-  // Pipeline items (from Form Request / Ready for Assignment groups) are
-  // excluded here — they belong in the Intake/Assigning view.
-  const scheduledWeekItems = useMemo(
-    () => (nextWeekData?.items ?? []).filter((i) => !i.isPipeline),
-    [nextWeekData]
-  );
-
   const productStatsMap = useMemo(() => {
     const map = new Map<string, { mondayCount: number; pipelineCount: number }>();
-    for (const item of scheduledWeekItems) {
+    for (const item of nextWeekData?.items ?? []) {
       const entry = map.get(item.product) ?? { mondayCount: 0, pipelineCount: 0 };
-      entry.mondayCount++;
+      if (item.isPipeline) entry.pipelineCount++; else entry.mondayCount++;
       map.set(item.product, entry);
     }
     return map;
-  }, [scheduledWeekItems]);
+  }, [nextWeekData]);
 
   const allProducts = useMemo(() => {
-    // Use non-pipeline product summary so the product list only reflects committed work
-    const mondayProducts = (nextWeekData?.productSummary ?? []).map((p) => ({
-      ...p,
-      total: productStatsMap.get(p.product)?.mondayCount ?? p.total,
-    }));
+    const mondayProducts = nextWeekData?.productSummary ?? [];
     const plannedProductNames = Array.from(new Set(plannedTasks.map((t) => t.product)));
     const extra = plannedProductNames
       .filter((p) => !mondayProducts.find((m) => m.product === p))
       .map((p): ProductSummary => ({ product: p, total: 0, byStatus: {} }));
     return [...mondayProducts, ...extra]
       .filter((p) => !BLOCKED_PRODUCTS.has(p.product.toLowerCase()));
-  }, [nextWeekData, plannedTasks, productStatsMap]);
+  }, [nextWeekData, plannedTasks]);
 
   const goalsBarData = useMemo(() => {
     const entries = Object.entries(goals.products) as [string, number][];
@@ -364,7 +352,7 @@ export function PlanningClient({
   const productsFrac = computeFraction(products);
   const bundlesFrac  = computeFraction(bundles);
 
-  const panelMondayItems  = scheduledWeekItems.filter((i) => i.product === selectedProduct);
+  const panelMondayItems  = nextWeekData?.items.filter((i) => i.product === selectedProduct) ?? [];
   const panelPlannedTasks = plannedTasks.filter((t) => t.product === selectedProduct);
   const plannedCountFor   = (product: string) => plannedTasks.filter((t) => t.product === product).length;
   const assigneesFor      = (product: string): string[] =>
