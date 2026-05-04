@@ -313,7 +313,7 @@ export function PlanningClient({
         entry.pipelineCount++;
       } else {
         entry.mondayCount++;
-        if (isDoneStatus(item.status)) entry.completedCount++;
+        if (isDoneStatus(item.status, item.statusColor)) entry.completedCount++;
       }
       map.set(item.product, entry);
     }
