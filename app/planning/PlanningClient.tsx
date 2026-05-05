@@ -817,7 +817,7 @@ function ProductCard({
 
   const numColor = isPast
     ? (goalTarget === null
-        ? "text-emerald-400"
+        ? (completedCount > 0 ? "text-emerald-400" : "text-zinc-500")
         : completedCount >= goalTarget ? "text-emerald-400"
         : completedCount >= goalTarget * 0.6 ? "text-amber-400"
         : "text-red-400")
