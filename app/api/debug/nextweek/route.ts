@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { BOARD_IDS } from "@/lib/types";
 import { getBoardMetadata, fetchBoardCached, buildWeekData } from "@/lib/items-server";
-import { normalizeMondayItem } from "@/lib/utils";
+import { normalizeMondayItem, getWeekWindow } from "@/lib/utils";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -32,12 +32,15 @@ export async function GET(req: Request) {
     .filter(Boolean) as NonNullable<ReturnType<typeof normalizeMondayItem>>[];
 
   const weekData = buildWeekData(normalized, intakeNormalized, allDepts, columnMapping, knownProducts, 1);
+  const weekWindow = getWeekWindow(1);
 
   const items = weekData.items.filter((i) =>
     !product || i.product.toLowerCase().includes(product.toLowerCase())
   );
 
   const summary = {
+    weekWindow: { start: weekWindow.start.toISOString(), end: weekWindow.end.toISOString() },
+    serverNow: new Date().toISOString(),
     total: items.length,
     mondayCount:   items.filter((i) => !i.isPipeline).length,
     pipelineCount: items.filter((i) =>  i.isPipeline).length,
